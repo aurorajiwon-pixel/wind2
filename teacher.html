@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>바람이 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#3f3d56;--muted:#64748b;--blue:#2563eb;--sky:#38bdf8;--line:#cbe7f7;--ok:#34d399;--warn:#f59e0b;--bad:#fb7185}
+body{font-family:'Jua','Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:var(--ink);background:linear-gradient(180deg,#bfe9ff 0%,#e9f7ff 45%,#fff4dc 100%);min-height:100vh}
+button,input,select,textarea{font-family:inherit}
+button{cursor:pointer}
+.card{background:#fff;border-radius:24px;box-shadow:0 8px 0 var(--line),0 14px 26px rgba(56,189,248,.15);padding:20px}
+.big{font-size:22px;padding:11px 26px;border:none;border-radius:18px;color:#fff;background:#fb7185;box-shadow:0 5px 0 #e11d48}
+.big.blue{background:var(--sky);box-shadow:0 5px 0 #0284c7}
+.big.green{background:var(--ok);box-shadow:0 5px 0 #059669}
+.big:disabled{background:#cbd5e1;box-shadow:0 5px 0 #94a3b8;cursor:default}
+.inp{font-size:20px;padding:10px 14px;border:3px solid #bae6fd;border-radius:14px;width:100%;margin:6px 0;outline:none}
+.inp:focus{border-color:var(--sky)}
+/* 로그인 */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+#login h1{font-size:34px;color:var(--blue);margin-bottom:6px}
+#login p{font-size:18px;color:var(--muted);margin-bottom:12px}
+#lmsg{color:#e11d48;font-size:17px;min-height:22px;margin-top:6px}
+/* 대시보드 */
+#dash{display:none}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 22px}
+.top h1{font-size:28px;color:var(--blue);margin-right:auto}
+.pill{background:#fff;border-radius:999px;padding:7px 16px;font-size:18px;box-shadow:0 4px 0 var(--line)}
+.top select{font-size:18px;border:3px solid #bae6fd;border-radius:12px;padding:5px 8px;background:#fff}
+.lnk{border:none;background:#fff;border-radius:999px;padding:7px 16px;font-size:17px;box-shadow:0 4px 0 var(--line);color:var(--ink)}
+.wrap{padding:0 22px 30px;max-width:1700px;margin:auto}
+.summary{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:18px}
+@media(max-width:1000px){.summary{grid-template-columns:1fr}}
+.cpbar{display:grid;grid-template-columns:repeat(12,1fr);gap:6px;margin-top:8px}
+.cpcol{text-align:center;font-size:14px;color:var(--muted)}
+.cpcol .bar{height:70px;background:#f1f5f9;border-radius:10px;position:relative;overflow:hidden;margin-bottom:4px}
+.cpcol .bar i{position:absolute;left:0;right:0;bottom:0;background:var(--ok);border-radius:10px}
+.cpcol .bar b{position:absolute;left:0;right:0;top:4px;font-size:16px;color:var(--ink)}
+.cpcol .now{font-size:14px;color:#0284c7}
+.sh{font-size:21px;margin-bottom:4px}
+.errs div{display:flex;justify-content:space-between;font-size:18px;padding:5px 0;border-bottom:2px dashed #f1f5f9}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.st{background:#fff;border-radius:22px;padding:14px;box-shadow:0 6px 0 var(--line);border:4px solid transparent;cursor:pointer;transition:.12s;position:relative}
+.st:hover{transform:translateY(-3px)}
+.st.help{border-color:#fbbf24;background:#fffbeb}
+.st.idle{border-color:#cbd5e1;background:#f8fafc}
+.st.fin{border-color:#86efac}
+.st.sel{outline:4px solid var(--sky)}
+.st h3{font-size:22px;display:flex;justify-content:space-between;gap:6px}
+.badge{font-size:15px;border-radius:999px;padding:3px 10px;background:#e0f2fe;color:#0369a1;white-space:nowrap}
+.badge.help{background:#fef3c7;color:#b45309}.badge.idle{background:#e2e8f0;color:#475569}.badge.fin{background:#dcfce7;color:#047857}
+.where{font-size:18px;margin:6px 0 4px}
+.sub{font-size:15px;color:var(--muted)}
+.pips{display:flex;gap:4px;margin:8px 0}
+.pips span{flex:1;height:12px;border-radius:6px;background:#e2e8f0}
+.pips span.d{background:var(--ok)}.pips span.c{background:var(--sky)}.pips span.e{box-shadow:inset 0 0 0 2px #fb7185}
+.err{font-size:16px;color:#e11d48;min-height:20px}
+.fbst{position:absolute;right:12px;bottom:10px;font-size:14px;color:var(--muted)}
+canvas.mini{width:100%;height:auto;background:#f8fafc;border-radius:12px;margin-top:6px}
+/* 상세 */
+#detail{position:fixed;top:0;right:0;height:100vh;width:min(520px,100vw);background:#fff;box-shadow:-10px 0 30px rgba(15,23,42,.18);transform:translateX(105%);transition:.25s;z-index:20;overflow:auto;padding:20px}
+#detail.on{transform:none}
+#detail h2{font-size:28px;color:var(--blue);display:flex;justify-content:space-between;align-items:center}
+.x{border:none;background:#f1f5f9;border-radius:50%;width:40px;height:40px;font-size:22px}
+table{width:100%;border-collapse:collapse;font-size:17px;margin:8px 0}
+td,th{padding:6px 6px;border-bottom:2px solid #f1f5f9;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:normal}
+.q{display:inline-block;width:28px;height:28px;line-height:28px;text-align:center;border-radius:8px;margin:1px;font-size:16px;color:#fff;background:#cbd5e1}
+.q.O{background:var(--ok)}.q.X{background:#fbbf24}
+.fbbox{background:#fef3c7;border:3px dashed #fbbf24;border-radius:18px;padding:14px;margin-top:12px}
+.quick{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.quick button{border:3px solid #fde68a;background:#fff;border-radius:14px;padding:8px 10px;font-size:16px;text-align:left;color:var(--ink)}
+.quick button:hover{border-color:#f59e0b}
+textarea{width:100%;font-size:19px;border:3px solid #fde68a;border-radius:14px;padding:10px;min-height:96px;outline:none;resize:vertical}
+.small{font-size:15px;color:var(--muted)}
+.empty{font-size:22px;color:var(--muted);text-align:center;padding:40px}
+.del{border:none;background:none;color:#94a3b8;font-size:15px;text-decoration:underline;margin-top:18px}
+</style>
+</head>
+<body>
+
+<section id="login">
+  <div class="card" style="width:min(440px,94vw)">
+    <h1>🌬️ 바람이 대시보드</h1>
+    <p>교사용 · 학생 진행 상황 확인과 피드백</p>
+    <input class="inp" id="em" type="email" placeholder="교사 이메일" autocomplete="username">
+    <input class="inp" id="pw" type="password" placeholder="비밀번호" autocomplete="current-password">
+    <div style="height:8px"></div>
+    <button class="big blue" id="btnLogin" style="width:100%">로그인</button>
+    <div id="lmsg"></div>
+  </div>
+</section>
+
+<section id="dash">
+  <div class="top">
+    <h1>🌬️ 바람이의 대모험 · 2차시</h1>
+    <select id="fCls"><option value="">모든 반</option></select>
+    <select id="fTime"><option value="3">최근 3시간</option><option value="24">오늘</option><option value="0">전체</option></select>
+    <div class="pill" id="stat">불러오는 중…</div>
+    <button class="lnk" id="btnOut">로그아웃</button>
+  </div>
+  <div class="wrap">
+    <div class="summary">
+      <div class="card"><div class="sh">📊 단계별 도달 <span class="small">(초록 = 완료한 학생 수, 파랑 = 지금 이 단계에 있는 학생)</span></div><div class="cpbar" id="cpbar"></div></div>
+      <div class="card"><div class="sh">❗ 지금 많이 나오는 오류</div><div class="errs" id="errs"></div></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<aside id="detail"></aside>
+
+<script>
+/* ===== 설정: 학생 웹앱(index.html)과 같은 값 ===== */
+/* ===== Firebase 설정 : 콘솔의 firebaseConfig 를 이 자리에 그대로 붙여 넣으면 돼요 ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyComt-8ZYj8wGaX7QvffsskSAdWtyCsiRc",
+  authDomain: "autumn-53c4f.firebaseapp.com",
+  projectId: "autumn-53c4f",
+  storageBucket: "autumn-53c4f.firebasestorage.app",
+  messagingSenderId: "15524754994",
+  appId: "1:15524754994:web:40c62dcf960bc56397ee2b",
+  measurementId: "G-FTEXC8DV2S"
+};
+const FB={apiKey:firebaseConfig.apiKey,projectId:firebaseConfig.projectId,col:'baram2'};
+const POLL_MS=6000, IDLE_MS=3*60*1000;
+
+const $=id=>document.getElementById(id);
+const CPS=[['s1a','1 던지기'],['s1b','1 전향력 그리기'],['s2a','2 관찰'],['s2b','2 힘 그리기①'],['s2c','2 힘 그리기②'],['s2d','2 발전소'],
+  ['s3a','3 저기압 그리기'],['s3b','3 고기압 그리기'],['s3c','3 레이스'],['s4a','4 지상풍 그리기'],['s4b','4 장소별 바람'],['s4c','4 저·고기압']];
+const CPN=Object.fromEntries(CPS);
+const TAG={'dir-pgf':'기압 경도력 방향','dir-cor':'전향력 방향','dir-fri':'마찰력 방향','len':'화살표 길이 (합력이 남음)','c-zero':'합력 0 (구심력 없음)','c-out':'합력이 바깥쪽',
+  'miss':'던지기 빗나감','obs-q':'관찰 질문 오답','slow':'발전소: 바람 약함','fast':'발전소: 바람 셈','race':'레이스 이탈','rank':'순위 오답','surf':'장소별 바람 오답','lowhigh':'저·고기압 오답'};
+const ERR_TAGS=['dir-pgf','dir-cor','dir-fri','len','c-zero','c-out','obs-q','surf','lowhigh','rank'];
+const TPL={
+  'dir-pgf':'기압 경도력은 등고선(등압선) 값이 높은 쪽에서 낮은 쪽으로, 선에 수직으로 작용해요. 숫자를 다시 읽어 볼까요? 🔴',
+  'dir-cor':'전향력은 북반구에서 바람 방향의 오른쪽 직각이에요. 보라색 바람이 가는 쪽을 보고 서서 오른팔을 뻗어 봐요! 🔵',
+  'dir-fri':'마찰력은 바람이 가는 방향의 반대쪽이에요. 바람을 붙잡는 힘이라고 생각해 봐요. 🟢',
+  'len':'방향은 모두 정확해요! 👏 이제 화살표 길이를 비교해 봐요. 바람이 곧게, 일정하게 불려면 합력은 얼마여야 할까요?',
+  'c-zero':'두 힘이 똑같으면 합력이 0이라 바람이 곧게 가 버려요. 둥글게 돌려면 합력이 어느 쪽을 향해야 할까요?',
+  'c-out':'합력이 바깥쪽을 향하고 있어요. 원의 중심을 향하려면 어느 화살표가 더 길어야 할까요?',
+  'obs-q':'세 번의 관찰에서 마지막 속도 숫자를 나란히 적어 보고 비교해 봐요. 👀',
+  'surf':'마찰이 클수록 바람은 느려지고, 그러면 전향력은 어떻게 될까요? 그래서 바람은 어느 쪽으로 기울까요?',
+  'lowhigh':'바람 입자들이 중심으로 모이는지, 바깥으로 퍼지는지 먼저 확인해 봐요. 모인 공기는 어디로 갈 수 있을까요?',
+  'rank':'기록판의 세 속도를 다시 비교해 봐요. 같은 기압 경도력에서 어느 바람이 가장 빨랐나요?',
+  'race':'트랙에서 벗어난 방향을 봐요. 바깥으로 나갔으면 바깥쪽 힘이 컸던 거예요. 어떤 힘이 바깥쪽이었나요?'};
+const PRAISE=['잘하고 있어요! 화살표가 아주 정확해요 👍','좋아요! 왜 그렇게 그렸는지 짝에게 설명해 볼까요? 🗣️','잠깐 선생님과 이야기해요 🙋'];
+const COL={pgf:'#f43f5e',cor:'#3b82f6',fri:'#10b981',vel:'#8b5cf6',cen:'#f59e0b'};
+const FN={pgf:'기압 경도력',cor:'전향력',fri:'마찰력'};
+
+/* ===== Firestore 값 변환 ===== */
+function toV(v){if(v===null||v===undefined)return{nullValue:null};if(typeof v==='boolean')return{booleanValue:v};
+  if(typeof v==='number')return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};if(typeof v==='string')return{stringValue:v};
+  if(Array.isArray(v))return{arrayValue:{values:v.map(toV)}};return{mapValue:{fields:Object.fromEntries(Object.entries(v).map(([k,x])=>[k,toV(x)]))}};}
+function fromV(v){if(!v)return null;if('stringValue'in v)return v.stringValue;if('integerValue'in v)return +v.integerValue;if('doubleValue'in v)return v.doubleValue;
+  if('booleanValue'in v)return v.booleanValue;if('arrayValue'in v)return(v.arrayValue.values||[]).map(fromV);
+  if('mapValue'in v)return Object.fromEntries(Object.entries(v.mapValue.fields||{}).map(([k,x])=>[k,fromV(x)]));return null;}
+const BASE=()=>`https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents/${FB.col}`;
+
+/* ===== 로그인 ===== */
+let AU=null;
+function saveAU(){try{sessionStorage.setItem('baram2_teacher',JSON.stringify(AU));}catch(e){}}
+async function login(email,pw){
+  const r=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key='+FB.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw,returnSecureToken:true})});
+  const j=await r.json();if(!r.ok)throw new Error((j.error&&j.error.message)||'로그인 실패');
+  AU={id:j.idToken,refresh:j.refreshToken,email:j.email,exp:Date.now()+(+j.expiresIn)*1000};saveAU();}
+async function token(){
+  if(AU&&AU.exp>Date.now()+60000)return AU.id;
+  const r=await fetch('https://securetoken.googleapis.com/v1/token?key='+FB.apiKey,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(AU.refresh)});
+  if(!r.ok){logout();throw new Error('세션 만료');}
+  const j=await r.json();AU.id=j.id_token;AU.refresh=j.refresh_token;AU.exp=Date.now()+(+j.expires_in)*1000;saveAU();return AU.id;}
+function logout(){AU=null;try{sessionStorage.removeItem('baram2_teacher');}catch(e){}clearInterval(timer);$('dash').style.display='none';$('login').style.display='flex';}
+$('btnLogin').onclick=async()=>{
+  if(/^여기/.test(FB.apiKey)){$('lmsg').textContent='teacher.html 설정(FB)에 apiKey를 먼저 넣어 주세요.';return;}
+  $('lmsg').textContent='';$('btnLogin').disabled=true;
+  try{await login($('em').value.trim(),$('pw').value);start();}catch(e){$('lmsg').textContent='로그인하지 못했어요: '+e.message;}
+  $('btnLogin').disabled=false;};
+$('pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnLogin').click();});
+$('btnOut').onclick=logout;
+
+/* ===== 데이터 ===== */
+let STU=[],timer=null,selId=null,lastLoad=0;
+async function load(){
+  const t=await token();let out=[],page='';
+  do{const r=await fetch(BASE()+'?pageSize=300'+(page?'&pageToken='+encodeURIComponent(page):''),{headers:{Authorization:'Bearer '+t}});
+    if(!r.ok)throw new Error('읽기 '+r.status);const j=await r.json();
+    (j.documents||[]).forEach(d=>{const o=Object.fromEntries(Object.entries(d.fields||{}).map(([k,v])=>[k,fromV(v)]));o.id=d.name.split('/').pop();out.push(o);});
+    page=j.nextPageToken||'';}while(page);
+  STU=out;lastLoad=Date.now();}
+async function sendFb(id,text){
+  const t=await token();const fb={t:text,at:Date.now()};
+  const r=await fetch(`${BASE()}/${id}?updateMask.fieldPaths=fb`,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({fields:{fb:toV(fb)}})});
+  if(!r.ok)throw new Error('보내기 '+r.status);const s=STU.find(x=>x.id===id);if(s)s.fb=fb;}
+async function delDoc(id){const t=await token();const r=await fetch(`${BASE()}/${id}`,{method:'DELETE',headers:{Authorization:'Bearer '+t}});if(!r.ok)throw new Error('삭제 '+r.status);STU=STU.filter(x=>x.id!==id);}
+
+/* ===== 계산 ===== */
+const errCount=(c,tags=ERR_TAGS)=>c?tags.reduce((a,k)=>a+((c.e||{})[k]||0),0):0;
+function status(s){
+  if((s.done||[]).every(x=>x))return['fin','🏆 완료'];
+  if(Date.now()-(s.updated||0)>IDLE_MS)return['idle','💤 '+Math.floor((Date.now()-(s.updated||0))/60000)+'분째 멈춤'];
+  const c=(s.cps||{})[s.cur];if(c&&!c.d&&errCount(c,Object.keys(TAG))>=3)return['help','🙋 도움 필요?'];
+  return['run','진행 중'];}
+function curErrs(s){const c=(s.cps||{})[s.cur];if(!c||!c.e)return[];return Object.entries(c.e).filter(([k,v])=>v>0&&TAG[k]).sort((a,b)=>b[1]-a[1]);}
+function mins(ms){const m=Math.floor(ms/60000);return m<1?'방금':m+'분째';}
+function hhmm(ms){const d=new Date(ms);return d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});}
+function filtered(){const c=$('fCls').value,h=+$('fTime').value;
+  return STU.filter(s=>(!c||s.cls===c)&&(!h||Date.now()-(s.updated||0)<h*3600000)).sort((a,b)=>(a.cls||'').localeCompare(b.cls||'')||(+a.num||0)-(+b.num||0));}
+
+/* ===== 그린 화살표 미리보기 ===== */
+function drawMini(cv,d){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  if(!d||!d.f){ctx.fillStyle='#94a3b8';ctx.font='15px Jua, sans-serif';ctx.textAlign='center';ctx.fillText('아직 그린 화살표 없음',W/2,H/2+5);return;}
+  const vs=Object.values(d.f).concat(d.w?[[d.w[1],0]]:[]);const m=Math.max(60,...vs.map(v=>Math.hypot(v[0],v[1])));const k=(Math.min(W,H)/2-12)/m;
+  const cx=W/2,cy=H/2;
+  const arr=(dx,dy,c,w,dash)=>{const L=Math.hypot(dx,dy);if(L<3)return;const a=Math.atan2(dy,dx),h=Math.min(10,L*.4);
+    ctx.save();ctx.strokeStyle=c;ctx.fillStyle=c;ctx.lineWidth=w;ctx.lineCap='round';if(dash)ctx.setLineDash(dash);
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+dx-h*.6*Math.cos(a),cy+dy-h*.6*Math.sin(a));ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(cx+dx,cy+dy);ctx.lineTo(cx+dx-h*Math.cos(a-.5),cy+dy-h*Math.sin(a-.5));ctx.lineTo(cx+dx-h*Math.cos(a+.5),cy+dy-h*Math.sin(a+.5));ctx.closePath();ctx.fill();ctx.restore();};
+  if(d.w){const a=d.w[0]*Math.PI/180;arr(Math.cos(a)*d.w[1]*k,Math.sin(a)*d.w[1]*k,COL.vel,3,[6,4]);}
+  let sx=0,sy=0;Object.entries(d.f).forEach(([key,v])=>{arr(v[0]*k,v[1]*k,COL[key]||'#334155',4);sx+=v[0];sy+=v[1];
+    if((d.bad||[]).includes(key)){ctx.fillStyle='#e11d48';ctx.font='bold 20px sans-serif';ctx.textAlign='center';ctx.fillText('✗',cx+v[0]*k*.55,cy+v[1]*k*.55-4);}});
+  if(d.tg!=='dir'&&Object.keys(d.f).length>1&&!(d.bad||[]).length){if(Math.hypot(sx,sy)>m*.08)arr(sx*k,sy*k,COL.cen,3);}
+  ctx.fillStyle='#fff';ctx.strokeStyle='#7dd3fc';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,7,0,7);ctx.fill();ctx.stroke();
+  ctx.font='13px Jua, sans-serif';ctx.textAlign='left';ctx.fillStyle=d.ok?'#047857':'#e11d48';ctx.fillText((CPN[d.cp]||'')+(d.ok?' · 성공':' · 확인 필요'),6,H-6);}
+
+/* ===== 그리기 ===== */
+function render(){
+  const list=filtered();
+  const cls=[...new Set(STU.map(s=>s.cls).filter(Boolean))].sort();const cur=$('fCls').value;
+  $('fCls').innerHTML='<option value="">모든 반</option>'+cls.map(c=>`<option ${c===cur?'selected':''}>${c}</option>`).join('');
+  $('stat').textContent=`👩‍🎓 ${list.length}명 · ${hhmm(lastLoad)} 새로고침`;
+  // 단계별 도달
+  $('cpbar').innerHTML=CPS.map(([id,nm])=>{const d=list.filter(s=>(s.cps||{})[id]&&s.cps[id].d).length,n=list.filter(s=>s.cur===id&&!((s.cps||{})[id]||{}).d).length;
+    const pct=list.length?d/list.length*100:0;return `<div class="cpcol"><div class="bar"><i style="height:${pct}%"></i><b>${d}</b></div>${nm}<div class="now">${n?'▶ '+n+'명':''}</div></div>`;}).join('');
+  // 오류
+  const tot={};list.forEach(s=>Object.values(s.cps||{}).forEach(c=>Object.entries(c.e||{}).forEach(([k,v])=>{if(ERR_TAGS.includes(k))tot[k]=(tot[k]||0)+v;})));
+  const top=Object.entries(tot).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  $('errs').innerHTML=top.length?top.map(([k,v])=>`<div><span>${TAG[k]}</span><b>${v}회</b></div>`).join(''):'<div class="small">아직 오류 기록이 없어요</div>';
+  // 학생 카드
+  if(!list.length){$('grid').innerHTML='<div class="empty">아직 접속한 학생이 없어요. 학생들이 웹앱에서 반·번호·이름을 넣고 시작하면 여기에 나타나요.</div>';return;}
+  $('grid').innerHTML=list.map(s=>{const [k,lab]=status(s),c=(s.cps||{})[s.cur]||{},e=curErrs(s);
+    const pips=CPS.map(([id])=>{const x=(s.cps||{})[id];return `<span class="${x&&x.d?'d':id===s.cur?'c':''} ${x&&errCount(x)?'e':''}"></span>`;}).join('');
+    const fbs=s.fb&&s.fb.t?((s.fbSeen||0)>=s.fb.at?'💌 읽음 ✓':'💌 안 읽음'):'';
+    return `<div class="st ${k} ${s.id===selId?'sel':''}" data-id="${s.id}"><h3><span>${s.cls?s.cls+' · ':''}${s.num}번 ${s.name}</span><span class="badge ${k}">${lab}</span></h3>
+      <div class="where">📍 ${CPN[s.cur]||'시작 전'}</div><div class="sub">${s.curSince?mins(Date.now()-s.curSince):''} · 시도 ${c.t||0}</div>
+      <div class="pips">${pips}</div><div class="err">${e.length?'❗ '+e.slice(0,2).map(([t,v])=>TAG[t]+' '+v+'회').join(', '):''}</div>
+      <canvas class="mini" width="240" height="120"></canvas><div class="fbst">${fbs}</div></div>`;}).join('');
+  document.querySelectorAll('.st').forEach(el=>{const s=STU.find(x=>x.id===el.dataset.id);drawMini(el.querySelector('canvas'),s.draw);el.onclick=()=>openDetail(s.id);});
+  if(selId)renderDetail(false);
+}
+function openDetail(id){selId=id;renderDetail(true);$('detail').classList.add('on');document.querySelectorAll('.st').forEach(e=>e.classList.toggle('sel',e.dataset.id===id));}
+function renderDetail(full){
+  const s=STU.find(x=>x.id===selId);if(!s){$('detail').classList.remove('on');return;}
+  const keepText=!full&&$('fbTxt')?$('fbTxt').value:null;
+  const rows=CPS.map(([id,nm])=>{const c=(s.cps||{})[id];if(!c)return `<tr><td>${nm}</td><td class="small">-</td><td></td><td></td></tr>`;
+    const es=Object.entries(c.e||{}).filter(([k,v])=>v&&TAG[k]).map(([k,v])=>`${TAG[k]} ${v}`).join('<br>');
+    return `<tr><td>${id===s.cur?'▶ ':''}${nm}</td><td>${c.d?'✅':'…'}</td><td>${c.t||0}</td><td style="color:#e11d48">${es}</td></tr>`;}).join('');
+  const e=curErrs(s);
+  const quick=e.map(([t])=>TPL[t]).filter(Boolean).concat(PRAISE);
+  const fbInfo=s.fb&&s.fb.t?`<div class="small" style="margin-top:6px">마지막으로 보낸 피드백 (${hhmm(s.fb.at)}) · ${(s.fbSeen||0)>=s.fb.at?'<b style="color:#047857">학생이 읽음 ✓</b>':'아직 안 읽음'}<br>“${s.fb.t}”</div>`:'';
+  $('detail').innerHTML=`<h2><span>${s.cls?s.cls+' · ':''}${s.num}번 ${s.name}</span><button class="x" id="dx">✕</button></h2>
+    <div class="small">마지막 활동 ${s.updated?hhmm(s.updated):'-'} · ⭐ ${(s.stars||[]).reduce((a,b)=>a+b,0)} / 12 · 퀴즈 ${(s.quiz||'--------').split('').map(q=>`<span class="q ${q}">${q==='-'?'·':q}</span>`).join('')}</div>
+    <canvas class="mini" id="bigMini" width="460" height="230"></canvas>
+    <table><tr><th>단계</th><th>완료</th><th>시도</th><th>오류</th></tr>${rows}</table>
+    <div class="fbbox"><div class="sh">💌 피드백 보내기</div><div class="small">누르면 아래 칸에 들어가요. 고쳐서 보내도 돼요. 학생 화면 왼쪽 아래에 카드로 떠요.</div>
+      <div class="quick">${quick.map((q,i)=>`<button data-q="${i}">${q}</button>`).join('')}</div>
+      <textarea id="fbTxt" placeholder="피드백을 쓰세요"></textarea><div style="height:8px"></div>
+      <button class="big green" id="fbSend">보내기 💌</button> <span class="small" id="fbMsg"></span>${fbInfo}</div>
+    <button class="del" id="dDel">이 학생 기록 지우기</button>`;
+  drawMini($('bigMini'),s.draw);
+  if(keepText!==null)$('fbTxt').value=keepText;
+  $('dx').onclick=()=>{selId=null;$('detail').classList.remove('on');document.querySelectorAll('.st').forEach(e=>e.classList.remove('sel'));};
+  document.querySelectorAll('.quick [data-q]').forEach(b=>b.onclick=()=>{$('fbTxt').value=quick[+b.dataset.q];$('fbTxt').focus();});
+  $('fbSend').onclick=async()=>{const t=$('fbTxt').value.trim();if(!t){$('fbMsg').textContent='내용을 써 주세요';return;}
+    $('fbSend').disabled=true;try{await sendFb(s.id,t);$('fbTxt').value='';$('fbMsg').textContent='보냈어요 ✓';render();renderDetail(true);}catch(err){$('fbMsg').textContent='보내지 못했어요: '+err.message;}$('fbSend').disabled=false;};
+  $('dDel').onclick=async()=>{if(!confirm(`${s.num}번 ${s.name} 학생의 기록을 지울까요? 되돌릴 수 없어요.`))return;try{await delDoc(s.id);selId=null;$('detail').classList.remove('on');render();}catch(err){alert(err.message);}};
+}
+$('fCls').onchange=render;$('fTime').onchange=render;
+
+async function tick(){if(document.hidden)return;try{await load();render();}catch(e){$('stat').textContent='⚠️ '+e.message;}}
+function start(){$('login').style.display='none';$('dash').style.display='block';tick();clearInterval(timer);timer=setInterval(tick,POLL_MS);}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AU)tick();});
+try{AU=JSON.parse(sessionStorage.getItem('baram2_teacher')||'null');}catch(e){AU=null;}
+if(AU&&AU.refresh)start();
+</script>
+</body>
+</html>

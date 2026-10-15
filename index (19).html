@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>☁️ 바람이의 대모험 · 2차시</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jua','Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#3f3d56;background:linear-gradient(180deg,#bfe9ff 0%,#e9f7ff 45%,#fff4dc 100%);min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer}
+.screen{display:none;min-height:100vh}.screen.on{display:block}
+/* 시작 */
+#start{display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px}
+#start.on{display:flex}
+.title{font-size:64px;color:#2563eb;text-shadow:3px 3px 0 #fff,6px 6px 0 #bae6fd;margin:10px 0}
+.sub{font-size:27px;color:#64748b;margin-bottom:24px}
+.card{background:#fff;border-radius:28px;box-shadow:0 10px 0 #cbe7f7,0 16px 30px rgba(56,189,248,.18);padding:24px}
+.inp{font-family:inherit;font-size:26px;padding:12px 16px;border:3px solid #bae6fd;border-radius:16px;width:100%;margin:6px 0;outline:none;text-align:center}
+.inp:focus{border-color:#38bdf8}
+.big{font-size:27px;padding:14px 34px;border:none;border-radius:20px;color:#fff;background:#fb7185;box-shadow:0 6px 0 #e11d48;transition:.1s}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 #e11d48}
+.big.blue{background:#38bdf8;box-shadow:0 6px 0 #0284c7}
+.big.green{background:#34d399;box-shadow:0 6px 0 #059669}
+.big:disabled{background:#cbd5e1;box-shadow:0 6px 0 #94a3b8;cursor:default}
+.float{animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-12px)}}
+/* 상단바 */
+.top{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;gap:10px;flex-wrap:wrap}
+.pill{background:#fff;border-radius:999px;padding:8px 20px;font-size:23px;box-shadow:0 4px 0 #cbe7f7}
+.back{border:none;background:#fff;border-radius:999px;padding:8px 20px;font-size:22px;box-shadow:0 4px 0 #cbe7f7;color:#3f3d56}
+/* 지도 */
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px;padding:10px 30px 30px;max-width:1200px;margin:auto}
+.isle{position:relative;border:none;background:#fff;border-radius:30px;padding:22px 16px;box-shadow:0 10px 0 #cbe7f7;text-align:center;font-size:22px;color:#3f3d56;transition:.15s}
+.isle:hover:not(.lock){transform:translateY(-6px) rotate(-1deg)}
+.isle .ic{font-size:70px;display:block;margin-bottom:6px}
+.isle h3{font-size:29px;margin-bottom:4px}
+.isle .st{font-size:28px;letter-spacing:2px;margin-top:6px}
+.isle.lock{filter:grayscale(1);opacity:.55;cursor:not-allowed}
+.isle.done{box-shadow:0 10px 0 #fde68a;background:#fffbeb}
+.isle .num{position:absolute;top:-12px;left:-12px;background:#fb7185;color:#fff;border-radius:50%;width:48px;height:48px;line-height:48px;font-size:25px}
+/* 스테이지 */
+.stagewrap{display:grid;grid-template-columns:minmax(0,1fr) 400px;align-items:start;gap:18px;padding:0 22px 22px;max-width:1500px;margin:auto}
+@media(max-width:1020px){.stagewrap{grid-template-columns:1fr}}
+.cvbox{background:#fff;border-radius:28px;box-shadow:0 10px 0 #cbe7f7;padding:10px;position:relative}
+canvas{width:100%;display:block;border-radius:20px;touch-action:none}
+.side{display:flex;flex-direction:column;gap:12px}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps span{background:#fff;border-radius:999px;padding:6px 14px;font-size:19px;box-shadow:0 3px 0 #cbe7f7;color:#94a3b8}
+.steps span.cur{background:#38bdf8;color:#fff;box-shadow:0 3px 0 #0284c7}
+.steps span.ok{background:#34d399;color:#fff;box-shadow:0 3px 0 #059669}
+.mascot{display:flex;gap:10px;align-items:flex-start}
+.mascot svg{flex:0 0 78px}
+.bubble{background:#fff;border-radius:20px;padding:14px 16px;font-size:21px;line-height:1.55;box-shadow:0 5px 0 #cbe7f7;position:relative;flex:1;min-height:80px}
+.bubble:before{content:'';position:absolute;left:-10px;top:22px;border:10px solid transparent;border-right-color:#fff;border-left:0}
+.goal{background:#fef3c7;border-radius:18px;padding:14px 16px;font-size:21px;line-height:1.55;border:3px dashed #fbbf24}
+.ctrl{background:#fff;border-radius:22px;padding:16px;box-shadow:0 5px 0 #cbe7f7;display:flex;flex-direction:column;gap:12px}
+.ctrl:empty{display:none}
+.ctrl label{font-size:21px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.tog{border:3px solid #bae6fd;background:#fff;border-radius:14px;padding:9px 14px;font-size:20px;color:#3f3d56;flex:1}
+.tog.on{background:#38bdf8;border-color:#38bdf8;color:#fff}
+.opt{border:3px solid #e2e8f0;background:#fff;border-radius:16px;padding:12px 14px;font-size:21px;color:#3f3d56;text-align:left;width:100%}
+.opt:hover{border-color:#38bdf8}
+.opt.right{background:#dcfce7;border-color:#34d399}
+.opt.wrong{background:#ffe4e6;border-color:#fb7185;animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+input[type=range]{-webkit-appearance:none;width:100%;height:18px;border-radius:10px;background:linear-gradient(90deg,#bae6fd,#fbcfe8);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:36px;height:36px;border-radius:50%;background:#fff;border:5px solid #fb7185;cursor:pointer}
+input[type=range]::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:#fff;border:5px solid #fb7185}
+.val{font-size:30px;color:#fb7185;text-align:center}
+.lv{display:flex;gap:6px;justify-content:center}
+.lv span{width:42px;height:42px;border-radius:50%;background:#e2e8f0;line-height:42px;text-align:center;font-size:21px;color:#fff}
+.lv span.cur{background:#38bdf8}.lv span.ok{background:#34d399}
+.formula{background:#eff6ff;border-radius:16px;padding:12px;font-size:21px;text-align:center;line-height:1.7;border:3px solid #bfdbfe}
+.legend{font-size:18px;display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.legend i{display:inline-block;width:22px;height:7px;border-radius:3px;vertical-align:middle;margin-right:5px}
+/* 힘 그리기 도구 */
+.drawbar{display:none;flex-wrap:wrap;gap:8px;align-items:center;padding:4px 4px 10px}
+.drawbar.on{display:flex}
+.fchip{border:3px solid var(--c);background:#fff;color:var(--c);border-radius:16px;padding:7px 11px;font-size:20px}
+.fchip.on{background:var(--c);color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.fchip.given{border-style:dashed;cursor:default}
+.dbtn{border:3px solid #bae6fd;background:#fff;border-radius:16px;padding:7px 11px;font-size:20px;color:#3f3d56}
+.dbtn.go{background:#fbbf24;border-color:#f59e0b;color:#fff;box-shadow:0 4px 0 #d97706}
+.dbtn:disabled{opacity:.45;cursor:default}
+.spacer{flex:1}
+.tip{font-size:20px;line-height:1.5;color:#475569}
+.rules{text-align:left;font-size:21px;line-height:1.7}
+.rules div{padding:6px 0;border-bottom:2px dashed #e2e8f0}
+/* 모달 */
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal.on{display:flex}
+.mbox{background:#fff;border-radius:30px;padding:28px;max-width:620px;width:100%;text-align:center;box-shadow:0 12px 0 #cbe7f7;animation:pop .35s;max-height:92vh;overflow:auto}
+@keyframes pop{0%{transform:scale(.6)}80%{transform:scale(1.05)}100%{transform:scale(1)}}
+.mbox h2{font-size:36px;color:#2563eb;margin-bottom:8px}
+.mbox p{font-size:23px;line-height:1.6;margin:8px 0}
+.bigstar{font-size:64px;letter-spacing:6px;margin:10px 0}
+.bigstar .off{filter:grayscale(1);opacity:.3}
+.code{font-family:monospace;font-size:14px;word-break:break-all;background:#f1f5f9;border-radius:12px;padding:12px;margin:10px 0;user-select:all;text-align:left}
+.conf{position:fixed;top:-40px;font-size:30px;z-index:60;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.qnum{color:#94a3b8;font-size:19px}
+.badge{display:inline-block;background:#fef3c7;border-radius:999px;padding:4px 12px;font-size:18px;margin:2px}
+/* 교사용 (Shift+Alt+T) */
+.tonly{display:none!important}
+body.teacher .tonly{display:inline-block!important}
+#tmode{position:fixed;right:12px;bottom:12px;background:#1e293b;color:#fff;border-radius:999px;padding:6px 14px;font-size:16px;display:none;z-index:70}
+body.teacher #tmode{display:block}
+/* 선생님 피드백 */
+#fbToast{position:fixed;left:20px;bottom:20px;max-width:460px;background:#fff;border:4px solid #fbbf24;border-radius:24px;padding:18px 20px;box-shadow:0 10px 0 #fde68a,0 16px 30px rgba(0,0,0,.18);z-index:80;display:none;font-size:23px;line-height:1.55;animation:pop .35s}
+#fbToast.on{display:block}
+.fbh{font-size:25px;color:#d97706;margin-bottom:6px}
+#fbText{white-space:pre-wrap;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<!-- ===== 시작 화면 ===== -->
+<section id="start" class="screen on">
+  <div class="float" id="bigMascot"></div>
+  <div class="title">바람이의 대모험</div>
+  <div class="sub">지구시스템과학 · 2차시 「바람에 힘이 하나씩 더해지면」</div>
+  <div class="card" style="width:min(440px,92vw)">
+    <input class="inp" id="inCls" placeholder="반 (예: 2-3)">
+    <input class="inp" id="inNum" placeholder="번호 (예: 7)" inputmode="numeric">
+    <input class="inp" id="inName" placeholder="이름">
+    <div style="height:10px"></div>
+    <button class="big" id="btnStart">모험 시작! ✨</button>
+  </div>
+</section>
+
+<!-- ===== 지도 ===== -->
+<section id="map" class="screen">
+  <div class="top">
+    <div class="pill" id="who">🙂</div>
+    <div class="pill" id="starTotal">⭐ 0 / 12</div>
+    <div class="pill" id="sync">⏳ 연결 중</div>
+  </div>
+  <div style="text-align:center;font-size:34px;color:#2563eb;margin:4px 0 14px">🗺️ 바람이가 하늘 왕국을 여행해요</div>
+  <div class="map" id="mapGrid"></div>
+</section>
+
+<!-- ===== 스테이지 ===== -->
+<section id="stage" class="screen">
+  <div class="top">
+    <button class="back" id="btnBack">◀ 지도로</button>
+    <div class="pill" id="stTitle"></div>
+    <div class="pill" id="stTry">시도 0</div>
+  </div>
+  <div class="stagewrap">
+    <div class="cvbox">
+      <div class="drawbar" id="drawbar"></div>
+      <canvas id="cv" width="900" height="580"></canvas>
+    </div>
+    <div class="side">
+      <div class="steps" id="steps"></div>
+      <div class="mascot"><div id="miniMascot"></div><div class="bubble" id="say"></div></div>
+      <div class="goal" id="goal"></div>
+      <div class="ctrl" id="ctrl"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 모달 ===== -->
+<div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
+<div id="tmode">교사 모드 (Shift+Alt+T)</div>
+<div id="fbToast"><div class="fbh">💌 선생님의 피드백</div><div id="fbText"></div><button class="big green" id="fbOk">확인했어요!</button></div>
+
+<script>
+/* ============ 공통 ============ */
+const $=id=>document.getElementById(id);
+if(!CanvasRenderingContext2D.prototype.roundRect)CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();};
+const cv=$('cv'),ctx=cv.getContext('2d'),W=900,H=580;
+const COL={pgf:'#f43f5e',cor:'#3b82f6',fri:'#10b981',cen:'#f59e0b',vel:'#8b5cf6'};
+const FN={pgf:'기압 경도력',cor:'전향력',fri:'마찰력'};
+const STAGES=[
+ {ic:'🎠',name:'빙글빙글 마을',sub:'전향력의 비밀'},
+ {ic:'🎈',name:'상층의 곧은 바람',sub:'지균풍'},
+ {ic:'🏎️',name:'둥근 길 레이스',sub:'경도풍'},
+ {ic:'🌾',name:'땅 위의 바람',sub:'지상풍'}];
+let S={name:'',num:'',stars:[0,0,0,0],att:[0,0,0,0],quiz:'--------',done:[0,0,0,0],t0:Date.now()};
+function save(){try{localStorage.setItem('baram2_'+S.num+'_'+S.name,JSON.stringify(S));}catch(e){}}
+
+/* ============ 선생님 대시보드 연결 (Firestore REST + 익명 로그인) ============
+   apiKey 를 넣으면 켜지고, 비워 두면 기록 없이 혼자 쓰는 모드로 동작한다. */
+/* ===== Firebase 설정 : 콘솔의 firebaseConfig 를 이 자리에 그대로 붙여 넣으면 돼요 ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyComt-8ZYj8wGaX7QvffsskSAdWtyCsiRc",
+  authDomain: "autumn-53c4f.firebaseapp.com",
+  projectId: "autumn-53c4f",
+  storageBucket: "autumn-53c4f.firebasestorage.app",
+  messagingSenderId: "15524754994",
+  appId: "1:15524754994:web:40c62dcf960bc56397ee2b",
+  measurementId: "G-FTEXC8DV2S"
+};
+const FB={apiKey:firebaseConfig.apiKey,projectId:firebaseConfig.projectId,col:'baram2'};
+const FB_ON=!!FB.apiKey&&!/^여기/.test(FB.apiKey);
+function P(){if(!S.p)S.p={cur:'',curSince:0,cps:{},last:null,draw:null,fbSeen:0};return S.p;}
+function cp(id){const p=P();p.cur=id;p.curSince=Date.now();p.cps[id]=p.cps[id]||{d:0,t:0,e:{}};save();sync(true);}
+function cpTry(tag){const p=P(),c=p.cps[p.cur];if(!c)return;c.t++;if(tag)c.e[tag]=(c.e[tag]||0)+1;p.last={cp:p.cur,ok:!tag,tag:tag||'',at:Date.now()};save();sync(!!tag);}
+function cpDone(){const p=P(),c=p.cps[p.cur];if(!c||c.d)return;c.d=1;p.last={cp:p.cur,ok:true,tag:'done',at:Date.now()};save();sync(true);}
+function toV(v){if(v===null||v===undefined)return{nullValue:null};if(typeof v==='boolean')return{booleanValue:v};
+  if(typeof v==='number')return Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v};if(typeof v==='string')return{stringValue:v};
+  if(Array.isArray(v))return{arrayValue:{values:v.map(toV)}};return{mapValue:{fields:Object.fromEntries(Object.entries(v).map(([k,x])=>[k,toV(x)]))}};}
+function fromV(v){if(!v)return null;if('stringValue'in v)return v.stringValue;if('integerValue'in v)return +v.integerValue;if('doubleValue'in v)return v.doubleValue;
+  if('booleanValue'in v)return v.booleanValue;if('arrayValue'in v)return(v.arrayValue.values||[]).map(fromV);
+  if('mapValue'in v)return Object.fromEntries(Object.entries(v.mapValue.fields||{}).map(([k,x])=>[k,fromV(x)]));return null;}
+let AU=null;
+async function authed(){
+  if(AU&&AU.exp>Date.now()+60000)return AU;
+  if(!AU){try{AU=JSON.parse(localStorage.getItem('baram2_auth')||'null');}catch(e){AU=null;}}
+  if(AU&&AU.exp>Date.now()+60000)return AU;
+  if(AU&&AU.refresh){const r=await fetch('https://securetoken.googleapis.com/v1/token?key='+FB.apiKey,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(AU.refresh)});
+    if(r.ok){const j=await r.json();AU={id:j.id_token,refresh:j.refresh_token,uid:j.user_id,exp:Date.now()+(+j.expires_in)*1000};}else AU=null;}
+  if(!AU||!AU.id){const r=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+FB.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({returnSecureToken:true})});
+    if(!r.ok)throw new Error('auth '+r.status);const j=await r.json();AU={id:j.idToken,refresh:j.refreshToken,uid:j.localId,exp:Date.now()+(+j.expiresIn)*1000};}
+  try{localStorage.setItem('baram2_auth',JSON.stringify(AU));}catch(e){}
+  return AU;}
+const DOC=()=>`https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents/${FB.col}/${AU.uid}`;
+let syncT=null,syncBusy=false,syncAgain=false,lastOK=0;
+function sync(now){if(!FB_ON||!S.name)return;clearTimeout(syncT);syncT=setTimeout(flush,now?60:1500);}
+async function flush(){if(syncBusy){syncAgain=true;return;}syncBusy=true;
+  try{await authed();const p=P();
+    const data={name:S.name,num:S.num,cls:S.cls||'',cur:p.cur,curSince:p.curSince,cps:p.cps,last:p.last,draw:p.draw,stars:S.stars,quiz:S.quiz,done:S.done,updated:Date.now(),fbSeen:p.fbSeen||0,t0:S.t0};
+    const mask=Object.keys(data).map(k=>'updateMask.fieldPaths='+k).join('&');
+    const r=await fetch(DOC()+'?'+mask,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+AU.id},
+      body:JSON.stringify({fields:Object.fromEntries(Object.entries(data).map(([k,v])=>[k,toV(v)]))})});
+    if(!r.ok)throw new Error('save '+r.status);lastOK=Date.now();setSync(true);
+  }catch(e){setSync(false);clearTimeout(syncT);syncT=setTimeout(flush,8000);}
+  syncBusy=false;if(syncAgain){syncAgain=false;flush();}}
+function setSync(ok){const e=$('sync');if(e)e.textContent=!FB_ON?'⚪ 기록 연결 꺼짐':ok?'🟢 선생님과 연결됨':'🟠 연결 다시 시도 중';}
+async function pollFb(){if(!FB_ON||!S.name||!AU)return;
+  try{await authed();const r=await fetch(DOC()+'?mask.fieldPaths=fb',{headers:{Authorization:'Bearer '+AU.id}});if(!r.ok)return;
+    const j=await r.json();const fb=j.fields&&j.fields.fb?fromV(j.fields.fb):null;
+    if(fb&&fb.t&&fb.at>(P().fbSeen||0)&&$('fbToast').dataset.at!==String(fb.at))showFb(fb);}catch(e){}}
+setInterval(pollFb,8000);
+function showFb(fb){const t=$('fbToast');t.dataset.at=fb.at;$('fbText').textContent=fb.t;t.classList.add('on');}
+
+function cloudSVG(size,mood='happy'){
+  const mouth=mood==='wow'?'<ellipse cx="50" cy="62" rx="6" ry="7" fill="#3f3d56"/>':
+    mood==='sad'?'<path d="M42 66 Q50 58 58 66" stroke="#3f3d56" stroke-width="4" fill="none" stroke-linecap="round"/>':
+    '<path d="M41 59 Q50 69 59 59" stroke="#3f3d56" stroke-width="4" fill="none" stroke-linecap="round"/>';
+  return `<svg width="${size}" height="${size*0.8}" viewBox="0 0 100 80"><g>
+  <circle cx="30" cy="48" r="20" fill="#fff"/><circle cx="52" cy="36" r="26" fill="#fff"/><circle cx="74" cy="48" r="19" fill="#fff"/>
+  <rect x="22" y="44" width="60" height="24" rx="12" fill="#fff"/>
+  <path d="M10 48 a20 20 0 0 1 20 -20 a26 26 0 0 1 48 0 a19 19 0 0 1 12 38 H22 a20 20 0 0 1 -12 -18z" fill="none" stroke="#7dd3fc" stroke-width="3"/>
+  <circle cx="40" cy="48" r="4.5" fill="#3f3d56"/><circle cx="60" cy="48" r="4.5" fill="#3f3d56"/>
+  <circle cx="41.5" cy="46.5" r="1.5" fill="#fff"/><circle cx="61.5" cy="46.5" r="1.5" fill="#fff"/>
+  <ellipse cx="32" cy="57" rx="5" ry="3" fill="#fda4af"/><ellipse cx="68" cy="57" rx="5" ry="3" fill="#fda4af"/>${mouth}</g></svg>`;
+}
+$('bigMascot').innerHTML=cloudSVG(190);
+$('fbOk').onclick=()=>{const t=$('fbToast');P().fbSeen=+t.dataset.at||Date.now();t.classList.remove('on');save();sync(true);};
+setSync(false);
+function say(t,mood='happy'){$('say').innerHTML=t;$('miniMascot').innerHTML=cloudSVG(78,mood);}
+function confetti(n=40){for(let i=0;i<n;i++){const e=document.createElement('div');e.className='conf';
+  e.textContent=['⭐','✨','🎉','💖','☁️','🌈'][i%6];e.style.left=Math.random()*100+'vw';
+  e.style.animationDuration=(1.6+Math.random()*1.8)+'s';e.style.animationDelay=Math.random()*.5+'s';
+  document.body.appendChild(e);setTimeout(()=>e.remove(),4200);}}
+function modal(h){$('mbox').innerHTML=h;$('modal').classList.add('on');}
+function closeModal(){$('modal').classList.remove('on');}
+function steps(names,i){$('steps').innerHTML=names.map((n,k)=>`<span class="${k<i?'ok':k===i?'cur':''}">${k<i?'✓':k+1} ${n}</span>`).join('');}
+function lvdots(n,i){return `<div class="lv">${Array.from({length:n},(_,k)=>`<span class="${k<i?'ok':k===i?'cur':''}">${k<i?'✓':k+1}</span>`).join('')}</div>`;}
+function nextBtn(label,fn){const old=$('nextBtn');if(old)old.remove();const b=document.createElement('button');b.className='big blue';b.textContent=label;b.id='nextBtn';b.onclick=fn;$('ctrl').appendChild(b);
+  setTimeout(()=>{try{b.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){}},60);}
+
+/* 캔버스 그리기 도구 */
+function arrow(x,y,dx,dy,c,w=6,label,dash){const L=Math.hypot(dx,dy);if(L<4)return;
+  ctx.save();ctx.strokeStyle=c;ctx.fillStyle=c;ctx.lineWidth=w;ctx.lineCap='round';if(dash)ctx.setLineDash(dash);
+  const a=Math.atan2(dy,dx),h=Math.min(20,L*.45);
+  ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+dx-h*.6*Math.cos(a),y+dy-h*.6*Math.sin(a));ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(x+dx,y+dy);ctx.lineTo(x+dx-h*Math.cos(a-.5),y+dy-h*Math.sin(a-.5));
+  ctx.lineTo(x+dx-h*Math.cos(a+.5),y+dy-h*Math.sin(a+.5));ctx.closePath();ctx.fill();
+  if(label){ctx.font='23px Jua, sans-serif';ctx.textAlign='center';
+    const horiz=Math.abs(Math.sin(a))<.45;
+    const lx=horiz?x+dx-34*Math.cos(a):x+dx+30*Math.cos(a),ly=horiz?y+dy-20:y+dy+30*Math.sin(a)+8;
+    ctx.lineWidth=6;ctx.strokeStyle='#fff';ctx.lineJoin='round';ctx.strokeText(label,lx,ly);ctx.fillText(label,lx,ly);}
+  ctx.restore();}
+function txt(t,x,y,c='#3f3d56',s=24,al='left',stroke=true){ctx.save();ctx.font=s+'px Jua, sans-serif';ctx.textAlign=al;
+  if(stroke){ctx.lineWidth=6;ctx.strokeStyle='#fff';ctx.lineJoin='round';ctx.strokeText(t,x,y);}ctx.fillStyle=c;ctx.fillText(t,x,y);ctx.restore();}
+function cloud(x,y,s=1,face=true){ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+  ctx.fillStyle='#fff';ctx.strokeStyle='#7dd3fc';ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(-12,4,12,0,7);ctx.arc(2,-6,15,0,7);ctx.arc(16,4,11,0,7);ctx.fill();
+  ctx.beginPath();ctx.arc(-12,4,12,Math.PI*.5,Math.PI*1.6);ctx.arc(2,-6,15,Math.PI*1.1,Math.PI*1.95);ctx.arc(16,4,11,Math.PI*1.4,Math.PI*.5);ctx.closePath();ctx.stroke();ctx.fill();
+  if(face){ctx.fillStyle='#3f3d56';ctx.beginPath();ctx.arc(-4,2,2.4,0,7);ctx.arc(8,2,2.4,0,7);ctx.fill();
+    ctx.fillStyle='#fda4af';ctx.beginPath();ctx.arc(-9,7,2.5,0,7);ctx.arc(13,7,2.5,0,7);ctx.fill();}
+  ctx.restore();}
+function sky(top='#dbf1ff',bot='#fffaf0'){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,top);g.addColorStop(1,bot);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+function compass(x=W-46,y=70){arrow(x,y+26,0,-46,'#64748b',3);txt('북',x,y-28,'#475569',22,'center');}
+function legend(keys){const nm={pgf:'기압 경도력',cor:'전향력',fri:'마찰력',cen:'합력 (구심력)',vel:'바람 방향'};
+  return '<div class="legend">'+keys.map(k=>`<div><i style="background:${COL[k]}"></i>${nm[k]}</div>`).join('')+'</div>';}
+function rulesModal(keys){
+  const R={pgf:`<b style="color:${COL.pgf}">기압 경도력</b> : 등고선(등압선) 값이 <b>높은 쪽 → 낮은 쪽</b>으로, 선에 <b>수직</b>`,
+    cor:`<b style="color:${COL.cor}">전향력</b> : 바람 방향에 <b>직각</b>. 북반구는 <b>오른쪽</b>, 남반구는 <b>왼쪽</b>. 바람이 빠를수록, 고위도일수록 크다`,
+    fri:`<b style="color:${COL.fri}">마찰력</b> : 바람의 <b>반대 방향</b>. 지표면이 거칠수록, 풍속이 빠를수록 크다`,
+    cen:`<b style="color:${COL.cen}">구심력</b> : 따로 있는 힘이 아니라, 원을 따라 돌 때 <b>중심을 향하는 합력</b>`};
+  modal(`<h2>💡 힘의 규칙</h2><div class="rules">${keys.map(k=>`<div>${R[k]}</div>`).join('')}</div><div style="height:12px"></div><button class="big blue" onclick="closeModal()">알겠어!</button>`);}
+
+/* ============ 힘 화살표 그리기 엔진 ============
+   학생이 구름(공기 덩어리)에서 바깥쪽으로 끌어서 힘 화살표를 직접 그린다.
+   「합력 확인」을 누르면 화살표를 꼬리-머리로 이어 붙여 합력을 보여 주고 판정한다. */
+let DR=null;
+const deg=r=>r*180/Math.PI, rad=d=>d*Math.PI/180;
+const polar=(a,L)=>[L*Math.cos(rad(a)),L*Math.sin(rad(a))];
+function angDiff(a,b){return Math.abs((((a-b)%360)+540)%360-180);}
+function vAng(v){return deg(Math.atan2(v[1],v[0]));}
+function vLen(v){return Math.hypot(v[0],v[1]);}
+function compassName(a){return ['동쪽','남동쪽','남쪽','남서쪽','서쪽','북서쪽','북쪽','북동쪽'][Math.round((((a%360)+360)%360)/45)%8];}
+function startDraw(cfg){
+  DR=Object.assign({vec:{},bad:{},active:null,dragging:false,shown:false,solved:false,tol:.22,angTol:20,maxLen:250,hemi:'N'},cfg);
+  DR.forces.forEach(f=>{if(f.given)DR.vec[f.key]=polar(f.exp,f.len);});
+  DR.active=(DR.forces.find(f=>!f.given)||{}).key||null;
+  $('drawbar').classList.add('on');renderBar();
+  frame=drawFrame;
+}
+function stopDraw(){DR=null;$('drawbar').classList.remove('on');$('drawbar').innerHTML='';}
+function renderBar(){
+  if(!DR)return;
+  const chips=DR.forces.map(f=>f.given
+    ?`<button class="fchip given" style="--c:${COL[f.key]}" disabled>🔒 ${FN[f.key]}</button>`
+    :`<button class="fchip ${DR.active===f.key?'on':''}" style="--c:${COL[f.key]}" data-k="${f.key}" ${DR.solved?'disabled':''}>${FN[f.key]}${DR.vec[f.key]?' ✓':''}</button>`).join('');
+  $('drawbar').innerHTML=chips+`<span class="spacer"></span>
+    <button class="dbtn" id="dRules">💡 규칙</button>
+    <button class="dbtn" id="dClear" ${DR.solved?'disabled':''}>↺ 지우기</button>
+    <button class="dbtn go" id="dCheck" ${DR.solved?'disabled':''}>${DR.target==='dir'?'✔ 확인하기':'✔ 합력 확인'}</button>
+    <button class="dbtn tonly" id="dSkip">⏭ 건너뛰기</button>`;
+  $('drawbar').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{if(DR.solved)return;DR.active=b.dataset.k;renderBar();});
+  $('dRules').onclick=()=>rulesModal(DR.ruleKeys||DR.forces.map(f=>f.key));
+  $('dClear').onclick=()=>{if(DR.solved)return;DR.forces.forEach(f=>{if(!f.given)delete DR.vec[f.key];});DR.bad={};DR.shown=false;DR.active=(DR.forces.find(f=>!f.given)||{}).key;renderBar();};
+  $('dCheck').onclick=checkDraw;
+  $('dSkip').onclick=()=>{if(!DR||DR.solved)return;DR.solved=true;renderBar();DR.onSolve&&DR.onSolve(true);};
+}
+function cvPos(e){const r=cv.getBoundingClientRect();const sx=r.width?W/r.width:1,sy=r.height?H/r.height:1;return {x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy};}
+function setVec(p){if(!DR||!DR.active)return;const dx=p.x-DR.origin.x,dy=p.y-DR.origin.y;let L=Math.hypot(dx,dy);if(L<10)return;
+  const a=Math.round(deg(Math.atan2(dy,dx))/5)*5;L=Math.min(L,DR.maxLen);DR.vec[DR.active]=polar(a,L);}
+cv.addEventListener('pointerdown',e=>{if(!DR||DR.solved||!DR.active)return;DR.dragging=true;DR.shown=false;DR.bad={};setVec(cvPos(e));
+  try{cv.setPointerCapture(e.pointerId);}catch(_){} e.preventDefault();});
+cv.addEventListener('pointermove',e=>{if(DR&&DR.dragging)setVec(cvPos(e));});
+function endDrag(){if(DR&&DR.dragging){DR.dragging=false;
+  if(DR.vec[DR.active]){const nx=DR.forces.find(f=>!f.given&&!DR.vec[f.key]);if(nx)DR.active=nx.key;}renderBar();}}
+window.addEventListener('pointerup',endDrag);window.addEventListener('pointercancel',endDrag);
+
+function recDraw(tag){const p=P();p.draw={cp:p.cur,tg:DR.target,w:DR.wind?[DR.wind.ang,DR.wind.len]:null,f:Object.fromEntries(DR.forces.filter(f=>DR.vec[f.key]).map(f=>[f.key,DR.vec[f.key].map(Math.round)])),bad:Object.keys(DR.bad),ok:!tag};cpTry(tag);}
+function sumVec(){return DR.forces.reduce((s,f)=>[s[0]+DR.vec[f.key][0],s[1]+DR.vec[f.key][1]],[0,0]);}
+function dirHint(k){
+  if(k==='pgf')return '🔴 <b>기압 경도력</b>의 방향을 다시 봐! 등고선(등압선) 값이 <b>높은 쪽에서 낮은 쪽</b>으로, 선에 <b>수직</b>으로 작용해.';
+  if(k==='cor')return DR.hemi==='S'?'🔵 <b>전향력</b>의 방향을 다시 봐! <b>남반구</b>에서는 바람 방향의 <b>왼쪽 직각</b>이야.':'🔵 <b>전향력</b>의 방향을 다시 봐! 북반구에서는 바람(보라색) 방향의 <b>오른쪽 직각</b>이야. 바람이 가는 쪽을 보고 서서 오른팔을 뻗어 봐!';
+  if(k==='fri')return '🟢 <b>마찰력</b>의 방향을 다시 봐! 마찰력은 바람의 <b>반대 방향</b>으로 작용해.';
+  return '';}
+function checkDraw(){
+  if(!DR||DR.solved)return;tries++;setTry();
+  const miss=DR.forces.filter(f=>!DR.vec[f.key]);
+  if(miss.length){DR.active=miss[0].key;renderBar();say(`아직 <b>${FN[miss[0].key]}</b> 화살표를 그리지 않았어! 위쪽 버튼을 누르고 구름에서 끌어 봐.`,'sad');return;}
+  DR.bad={};
+  DR.forces.forEach(f=>{if(!f.given&&angDiff(vAng(DR.vec[f.key]),f.exp)>DR.angTol)DR.bad[f.key]=1;});
+  const badKeys=Object.keys(DR.bad);
+  if(badKeys.length){DR.shown=false;recDraw('dir-'+badKeys[0]);say(dirHint(badKeys[0])+(badKeys.length>1?`<br><small>(방향이 다른 화살표가 ${badKeys.length}개 있어. 빨간 ✗ 표시를 봐!)</small>`:''),'sad');return;}
+  if(DR.target==='dir'){return solve();}
+  DR.shown=true;
+  const R=sumVec(),RL=vLen(R),ref=Math.max(...DR.forces.map(f=>vLen(DR.vec[f.key])));
+  if(DR.target==='zero'){
+    if(RL<=DR.tol*ref)return solve();
+    recDraw('len');say(`방향은 모두 맞았어! 그런데 화살표를 이어 붙여 보니 <b>합력</b>(노란색)이 <b>${compassName(vAng(R))}</b>으로 남아 있어.<br>합력이 남아 있으면 바람은 그쪽으로 휘거나 빨라지겠지? 바람이 <b>곧게, 일정하게</b> 불려면 합력은 어떻게 되어야 할까? 화살표 <b>길이</b>를 다시 조절해 봐!`,'sad');return;}
+  if(DR.target==='center'){
+    if(RL<.12*ref){recDraw('c-zero');say('방향은 모두 맞았어! 그런데 합력이 거의 <b>0</b>이야. 합력이 0이면 바람은 <b>곧게</b> 나아가서 둥근 길을 벗어나 버려. 둥글게 돌려면 합력이 어느 쪽을 향해야 할까?','sad');return;}
+    if(angDiff(vAng(R),DR.centerAng)>30){recDraw('c-out');say('방향은 모두 맞았어! 그런데 합력(노란색)이 <b>바깥쪽</b>을 향해. 이러면 바람은 길 바깥으로 튕겨 나가! 둥글게 돌려면 합력이 <b>중심</b>을 향해야 해. 어느 화살표를 더 길게 해야 할까?','sad');return;}
+    return solve();}
+}
+function solve(){recDraw(null);DR.solved=true;DR.shown=DR.target!=='dir';renderBar();confetti(24);DR.onSolve&&DR.onSolve(false);}
+function drawFrame(){
+  if(!DR)return;
+  DR.scene();
+  const O=DR.origin;
+  // 길이 비교용 눈금 원
+  ctx.save();ctx.strokeStyle='rgba(100,116,139,.22)';ctx.lineWidth=1.5;ctx.setLineDash([4,6]);
+  for(let r=50;r<=DR.maxLen;r+=50){ctx.beginPath();ctx.arc(O.x,O.y,r,0,7);ctx.stroke();}ctx.restore();
+  // 바람
+  if(DR.wind)arrow(O.x,O.y,...polar(DR.wind.ang,DR.wind.len),COL.vel,6,DR.wind.label||'바람',[14,8]);
+  cloud(O.x,O.y,1.35);
+  // 합력 (꼬리-머리 잇기) : 힘 화살표보다 먼저, 넓은 띠로 그려서 겹쳐도 보이게
+  if(DR.shown){let x=O.x,y=O.y;
+    ctx.save();ctx.globalAlpha=.5;DR.forces.forEach((f,i)=>{const v=DR.vec[f.key];if(i>0)arrow(x,y,v[0],v[1],COL[f.key],5,null,[10,8]);x+=v[0];y+=v[1];});ctx.restore();
+    const R=sumVec(),RL=vLen(R),ref=Math.max(...DR.forces.map(f=>vLen(DR.vec[f.key])));
+    if(RL<=DR.tol*ref&&DR.target==='zero'){ctx.save();ctx.strokeStyle=COL.cen;ctx.lineWidth=7;ctx.beginPath();ctx.arc(O.x,O.y,30,0,7);ctx.stroke();ctx.restore();}
+    else{ctx.save();ctx.globalAlpha=.55;arrow(O.x,O.y,R[0],R[1],COL.cen,22);ctx.restore();arrow(O.x,O.y,R[0],R[1],COL.cen,4);}
+  }
+  // 학생이 그린 힘
+  DR.forces.forEach(f=>{const v=DR.vec[f.key];if(!v)return;arrow(O.x,O.y,v[0],v[1],COL[f.key],8,FN[f.key]);
+    if(DR.bad[f.key]){txt('✗',O.x+v[0]*.55,O.y+v[1]*.55-10,'#e11d48',40,'center');}});
+  if(DR.shown){const R=sumVec(),RL=vLen(R),ref=Math.max(...DR.forces.map(f=>vLen(DR.vec[f.key])));
+    if(RL<=DR.tol*ref&&DR.target==='zero')txt('합력 = 0',O.x+44,O.y+52,'#b45309',30,'left');
+    else{const m=[O.x+R[0]*.6,O.y+R[1]*.6],pp=Math.abs(R[0])>Math.abs(R[1])?[0,44]:[64,0];
+      txt(DR.target==='center'&&DR.solved?'합력 = 구심력':'합력',m[0]+pp[0],m[1]+pp[1]+8,'#b45309',28,'center');}
+    if(DR.solved&&DR.extra)DR.extra();}
+  if(!DR.solved&&!Object.keys(DR.vec).some(k=>!DR.forces.find(f=>f.key===k).given)){
+    ctx.save();ctx.fillStyle='rgba(255,255,255,.92)';ctx.beginPath();ctx.roundRect(W/2-300,H-62,600,48,18);ctx.fill();ctx.restore();
+    txt('위의 힘 버튼을 고르고 → 구름에서 바깥쪽으로 끌어서 그려요',W/2,H-29,'#475569',23,'center',false);}
+}
+
+/* 루프 */
+let frame=null,raf=0,last=0;
+let errShown=0;
+function loop(t){raf=requestAnimationFrame(loop);const dt=Math.min(.04,(t-last)/1000||0);last=t;
+  if(frame){try{frame(dt);}catch(e){console.error(e);if(errShown<3){errShown++;ctx.save();ctx.fillStyle='#fff';ctx.fillRect(0,H-40,W,40);ctx.fillStyle='#e11d48';ctx.font='16px sans-serif';ctx.fillText('오류: '+e.message,10,H-14);ctx.restore();}}}}
+raf=requestAnimationFrame(loop);
+
+/* ============ 화면 전환 ============ */
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');}
+$('btnStart').onclick=()=>{
+  const n=$('inName').value.trim(),no=$('inNum').value.trim(),cl=$('inCls').value.trim();
+  if(!n||!no||!cl){if(!cl)$('inCls').placeholder='반을 꼭 써 주세요!';if(!n)$('inName').placeholder='이름을 꼭 써 주세요!';return;}
+  let old=null;try{old=localStorage.getItem('baram2_'+no+'_'+n);}catch(e){}
+  S=old?JSON.parse(old):{name:n,num:no,stars:[0,0,0,0],att:[0,0,0,0],quiz:'--------',done:[0,0,0,0],t0:Date.now()};
+  S.cls=cl;P();save();renderMap();show('map');sync(true);};
+function renderMap(){
+  $('who').textContent=`${S.num}번 ${S.name}`;
+  const tot=S.stars.reduce((a,b)=>a+b,0);$('starTotal').textContent=`⭐ ${tot} / 12`;
+  $('mapGrid').innerHTML=STAGES.map((st,i)=>{
+    const lock=i>0&&!S.done[i-1]&&!document.body.classList.contains('teacher'),done=S.done[i];
+    const stars=[0,1,2].map(k=>k<S.stars[i]?'⭐':'<span style="opacity:.25">⭐</span>').join('');
+    return `<button class="isle ${lock?'lock':''} ${done?'done':''}" data-i="${i}"><span class="num">${i+1}</span>
+      <span class="ic">${lock?'🔒':st.ic}</span><h3>${st.name}</h3><div>${st.sub}</div><div class="st">${stars}</div></button>`;}).join('')+
+    `<button class="isle ${S.done.every(x=>x)?'':'lock'}" id="isleEnd"><span class="ic">🏆</span><h3>모험 완료!</h3><div>선생님께 기록 제출</div></button>`;
+  document.querySelectorAll('.isle[data-i]').forEach(b=>b.onclick=()=>{if(b.classList.contains('lock')){b.animate([{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'none'}],{duration:250});return;}openStage(+b.dataset.i);});
+  $('isleEnd').onclick=()=>{if(!S.done.every(x=>x))return;
+    if(FB_ON&&lastOK){sync(true);confetti();modal(`<h2>🏆 모험 완료!</h2><p>모든 기록이 선생님께 <b>자동으로</b> 전달됐어요 ✨</p><p>⭐ ${S.stars.reduce((a,b)=>a+b,0)} / 12</p><button class="big blue" onclick="closeModal()">닫기</button>`);}
+    else submit();};
+}
+$('btnBack').onclick=()=>{frame=null;stopDraw();renderMap();show('map');};
+document.addEventListener('keydown',e=>{if(e.shiftKey&&e.altKey&&(e.code==='KeyT')){document.body.classList.toggle('teacher');if($('map').classList.contains('on'))renderMap();}});
+
+let cur=0,tries=0;
+function setTry(){$('stTry').textContent='시도 '+tries;}
+function openStage(i){frame=null;stopDraw();ctx.clearRect(0,0,W,H);cur=i;tries=0;setTry();$('ctrl').innerHTML='';$('stTitle').textContent=`${STAGES[i].ic} ${i+1}. ${STAGES[i].name}`;
+  show('stage');[stage1,stage2,stage3,stage4][i]();}
+
+/* 스테이지 클리어 → 퀴즈 → 저장 */
+function clearStage(stars,extra=''){
+  cpDone();frame=null;stopDraw();
+  S.att[cur]=tries;S.stars[cur]=Math.max(S.stars[cur],stars);save();confetti();
+  const st=[0,1,2].map(k=>k<stars?'⭐':'<span class="off">⭐</span>').join('');
+  modal(`<h2>스테이지 클리어! 🎉</h2><div class="bigstar">${st}</div><p>${extra}</p><p>마지막으로 바람이의 퀴즈 2개!</p><button class="big blue" id="goQuiz">퀴즈 풀기 ▶</button>`);
+  $('goQuiz').onclick=()=>quiz(0);
+}
+const QUIZ=[
+ [{q:'북반구에서 움직이는 공기에 작용하는 전향력의 방향은?',o:['운동 방향의 왼쪽 직각','운동 방향의 오른쪽 직각','운동 방향과 같은 쪽'],a:1,e:'북반구에서 전향력은 운동 방향의 <b>오른쪽 직각</b>으로 작용해요. (남반구는 왼쪽)'},
+  {q:'전향력에 대한 설명으로 옳은 것은?',o:['적도에서 가장 크다','바람의 속력을 바꾼다','고위도일수록, 바람이 빠를수록 크다'],a:2,e:'전향력은 <b>고위도일수록, 빠를수록</b> 커요. 방향만 바꾸고 속력은 바꾸지 않아요. 적도와 정지한 공기에는 작용하지 않아요.'}],
+ [{q:'지균풍은 어떤 두 힘이 평형을 이룰 때 부는 바람일까?',o:['기압 경도력 = 마찰력','기압 경도력 = 전향력','전향력 = 마찰력'],a:1,e:'기압 경도력 = 전향력 → 합력 0 → 등고선과 나란하게!'},
+  {q:'기압 경도력이 같을 때, 지균풍의 풍속은 위도에 따라 어떻게 달라질까?',o:['저위도로 갈수록 빠르다','고위도로 갈수록 빠르다','위도와 관계없다'],a:0,e:'저위도일수록 전향력(2vΩ sinφ)이 약해서, 더 <b>빠른</b> 바람이어야 기압 경도력과 평형을 이뤄요.'}],
+ [{q:'같은 위도에서 기압 경도력이 같을 때 가장 빠른 바람은?',o:['저기압성 경도풍','지균풍','고기압성 경도풍'],a:2,e:'고기압성 경도풍 &gt; 지균풍 &gt; 저기압성 경도풍!'},
+  {q:'고기압 둘레를 돌 때, 중심을 향하는 합력(구심력)은 어떻게 생길까?',o:['기압 경도력 − 전향력','전향력 − 기압 경도력','기압 경도력 + 전향력'],a:1,e:'고기압에서는 기압 경도력이 바깥쪽, 전향력이 안쪽! 그래서 <b>전향력 − 기압 경도력 = 구심력</b>. 전향력이 더 커야 하니 바람이 빨라요.'}],
+ [{q:'마찰이 큰 육지에서 바람은 등압선을 어떻게 지날까?',o:['나란하게','저기압 쪽으로 더 많이 기울어서','고기압 쪽으로 기울어서'],a:1,e:'마찰 → 느려짐 → 전향력 약해짐 → 저기압 쪽으로 더 크게 기울어요. 마찰력이 클수록 등압선과 이루는 각이 커요.'},
+  {q:'지상 저기압 중심에 모여든 공기는?',o:['위로 올라간다','아래로 내려간다','사라진다'],a:0,e:'모인 공기는 상승! 올라간 공기는 어떻게 될까? → 3차시에 계속 ☁️'}]];
+function quiz(k){
+  const Q=QUIZ[cur][k];let first=true;
+  modal(`<div class="qnum">퀴즈 ${k+1} / 2</div><h2 style="font-size:28px;margin:10px 0">${Q.q}</h2>
+   <div style="display:flex;flex-direction:column;gap:8px">${Q.o.map((o,i)=>`<button class="opt" data-i="${i}">${o}</button>`).join('')}</div><p id="qe"></p>`);
+  document.querySelectorAll('#mbox .opt').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i,idx=cur*2+k;
+    if(i===Q.a){b.classList.add('right');
+      if(S.quiz[idx]==='-'){S.quiz=S.quiz.slice(0,idx)+(first?'O':'X')+S.quiz.slice(idx+1);}save();sync(true);
+      $('qe').innerHTML='✅ '+Q.e+'<br><br><button class="big green" id="qn">'+(k===0?'다음 문제':'완료!')+'</button>';
+      $('qn').onclick=()=>{if(k===0)quiz(1);else{S.done[cur]=1;save();sync(true);closeModal();frame=null;renderMap();show('map');}};
+    }else{first=false;b.classList.add('wrong');}
+  });
+}
+
+/* 제출 코드 */
+function makeCode(){
+  const o={n:S.name,no:S.num,s:S.stars,a:S.att,q:S.quiz,d:S.done,m:Math.round((Date.now()-S.t0)/60000),t:Date.now()};
+  const b=btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+  let cs=0;for(const ch of b)cs=(cs*31+ch.charCodeAt(0))%46655;
+  return 'BR2:'+b+':'+cs.toString(36);}
+function submit(){
+  const code=makeCode();
+  modal(`<h2>📮 선생님께 제출</h2><p>아래 코드를 <b>복사</b>해서 선생님이 알려 준 곳(Amplify 화면 등)에 <b>붙여 넣어</b> 주세요.</p>
+   <div class="code" id="codeBox">${code}</div>
+   <div class="row" style="justify-content:center"><button class="big blue" id="cp">📋 복사하기</button><button class="big" id="cl">닫기</button></div><p id="cpm"></p>`);
+  $('cp').onclick=()=>{navigator.clipboard.writeText(code).then(()=>$('cpm').textContent='복사 완료! 붙여 넣기 하세요 ✨',()=>{
+    const r=document.createRange();r.selectNode($('codeBox'));getSelection().removeAllRanges();getSelection().addRange(r);$('cpm').textContent='코드가 선택되었어요. Ctrl+C 로 복사!';});};
+  $('cl').onclick=closeModal;}
+
+/* ============ STAGE 1 · 빙글빙글 마을 (전향력) ============ */
+function stage1(){
+  const STEPS=['던지기','전향력 그리기'];
+  const R=[{w:0,name:'🌴 적도 마을',d:'땅이 돌지 않는 마을'},{w:.42,name:'🏡 중위도 마을',d:'땅이 천천히 도는 마을'},{w:.8,name:'🐧 극 마을',d:'땅이 빨리 도는 마을'}];
+  let ri=0,aimDeg=0,view='disk',ball=null,clock=0,lock=false;
+  const cx=W/2,cy=H/2+20,RAD=225,SP=165;
+  steps(STEPS,0);cp('s1a');
+  $('goal').innerHTML='🎯 <b>미션</b> : 가운데의 바람이가 테두리의 친구 🐥 에게 편지 공을 던져요. 땅(원판)은 <b>반시계 방향</b>으로 돌아요 (북반구처럼!). 3개 마을에서 모두 배달 성공하기!';
+  $('ctrl').innerHTML=`<div class="lv" id="lv"></div><div style="text-align:center;font-size:23px" id="rname"></div>
+   <label>조준 방향</label><input type="range" id="aim" min="-70" max="70" value="0"><div class="val" id="aimT">정면</div>
+   <button class="big" id="fire">🎈 던지기!</button>
+   <div class="row"><button class="tog on" id="vD">🧍 마을 사람 눈</button><button class="tog" id="vS">🚀 우주에서 보기</button></div>`;
+  const setR=()=>{$('rname').textContent=R[ri].name+' · '+R[ri].d;
+    $('lv').innerHTML=R.map((_,i)=>`<span class="${i<ri?'ok':i===ri?'cur':''}">${i<ri?'✓':i+1}</span>`).join('');ball=null;};
+  setR();say('먼저 적도 마을! 땅이 안 도니까 정면으로 던지면 되겠지? 😊');
+  $('aim').oninput=e=>{aimDeg=+e.target.value;$('aimT').textContent=aimDeg===0?'정면':aimDeg<0?`왼쪽으로 ${-aimDeg}°`:`오른쪽으로 ${aimDeg}°`;};
+  $('vD').onclick=()=>{view='disk';$('vD').classList.add('on');$('vS').classList.remove('on');};
+  $('vS').onclick=()=>{view='space';$('vS').classList.add('on');$('vD').classList.remove('on');};
+  $('fire').onclick=()=>{if(lock||(ball&&!ball.end))return;tries++;setTry();
+    ball={a:-Math.PI/2+aimDeg*Math.PI/180,t:0,t0:clock,w:R[ri].w,end:false};};
+  frame=dt=>{
+    clock+=dt;const RR=R[Math.min(ri,2)],w=RR.w,phi=-w*clock;
+    if(ball&&!ball.end){ball.t+=dt;if(SP*ball.t>=RAD){ball.t=RAD/SP;ball.end=true;judge();}}
+    sky('#e0f2fe','#fef9c3');
+    ctx.save();ctx.translate(cx,cy);
+    const rot=view==='space'?phi:0;ctx.rotate(rot);
+    const g=ctx.createRadialGradient(0,0,20,0,0,RAD+20);g.addColorStop(0,'#bbf7d0');g.addColorStop(1,'#86efac');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,RAD+18,0,7);ctx.fill();
+    ctx.lineWidth=8;ctx.strokeStyle='#fff';ctx.stroke();
+    for(let i=0;i<12;i++){const a=i*Math.PI/6;ctx.fillStyle=i%2?'#fde68a':'#fbcfe8';ctx.beginPath();ctx.arc((RAD-30)*Math.cos(a),(RAD-30)*Math.sin(a),9,0,7);ctx.fill();}
+    ctx.font='38px serif';ctx.textAlign='center';ctx.fillText('🐥',0,-RAD+14);
+    ctx.font='26px serif';ctx.fillText('🌳',RAD*.55,RAD*.4);ctx.fillText('🏠',-RAD*.5,RAD*.45);ctx.fillText('🌷',-RAD*.55,-RAD*.25);
+    ctx.restore();
+    if(w){ctx.save();ctx.strokeStyle='#f472b6';ctx.lineWidth=5;ctx.setLineDash([10,8]);ctx.lineDashOffset=clock*40;ctx.beginPath();ctx.arc(cx,cy,RAD+34,-.4,-1.4,true);ctx.stroke();ctx.restore();
+      const ea=-1.4;arrow(cx+(RAD+34)*Math.cos(ea),cy+(RAD+34)*Math.sin(ea),-14,-3,'#f472b6',5);txt('반시계 회전',cx+RAD*.62,cy-RAD-34,'#db2777',22);}
+    if(!ball||ball.end){const a=-Math.PI/2+aimDeg*Math.PI/180;ctx.save();ctx.setLineDash([6,8]);ctx.strokeStyle='#94a3b8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+RAD*Math.cos(a),cy+RAD*Math.sin(a));ctx.stroke();ctx.restore();}
+    if(ball){ctx.save();ctx.strokeStyle='#fb7185';ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();
+      let px,py;for(let s=0;s<=ball.t+1e-6;s+=.02){
+        const ang=view==='space'?ball.a-ball.w*ball.t0:ball.a+ball.w*s;px=cx+SP*s*Math.cos(ang);py=cy+SP*s*Math.sin(ang);s?ctx.lineTo(px,py):ctx.moveTo(px,py);}
+      ctx.stroke();ctx.restore();ctx.font='28px serif';ctx.textAlign='center';ctx.fillText('💌',px,py+9);}
+    cloud(cx,cy,1.5);
+    txt(view==='disk'?'🧍 마을 사람이 본 모습':'🚀 우주에서 본 모습',20,40,'#2563eb',28);
+    if(view==='space'&&w)txt('우주에서 보면 공은 똑바로! 땅이 돌아간 거예요',20,74,'#64748b',21);
+  };
+  function judge(){
+    const endAng=ball.a+ball.w*ball.t;
+    let d=(endAng+Math.PI/2)*180/Math.PI;
+    cpTry(Math.abs(d)<=7?null:'miss');
+    if(Math.abs(d)<=7){lock=true;confetti(25);say(['배달 성공! 땅이 안 돌면 공은 똑바로 가요 🎉','성공!! 공이 <b>오른쪽으로 휘는 걸</b> 미리 생각하고 왼쪽을 겨눴구나! 🤩','극 마을까지 성공! 땅이 빨리 돌수록 더 많이 휘어요 🐧'][ri],'wow');
+      setTimeout(()=>{lock=false;if(cur!==0||!$('rname'))return;ri++;if(ri<3){setR();say(ri===1?'이번엔 땅이 돌아요! 똑같이 정면으로 던지면 어떻게 될까? 🤔':'극 마을은 땅이 엄청 빨리 돌아요! 💨');}
+        else{cpDone();say('세 마을 모두 성공! 🎉 공을 휘게 만든 힘이 바로 <b>전향력</b>이야. 이제 전향력 화살표를 직접 그려 보자!','wow');$('ctrl').innerHTML='';nextBtn('✏️ 전향력 그리기 ▶',()=>drill(0));}},1800);}
+    else if(d>0)say(`앗, 친구의 <b>오른쪽</b>으로 ${Math.round(d)}° 빗나갔어! ${ri?'공이 오른쪽으로 휘어 보이네… 🚀 우주에서 보기로 확인해 볼까? 그리고 조금 더 <b>왼쪽</b>을 겨눠 봐!':'조금 더 왼쪽!'}`,'sad');
+    else say(`이번엔 친구의 <b>왼쪽</b>으로 ${Math.round(-d)}° 빗나갔어. 너무 왼쪽을 겨눴나 봐!`,'sad');
+  }
+  /* --- 전향력 화살표 그리기 --- */
+  const DRILL=[{w:0,h:'N'},{w:-90,h:'N'},{w:135,h:'N'},{w:0,h:'S'}];
+  function drill(k){
+    const D=DRILL[k];steps(STEPS,1);if(k===0)cp('s1b');
+    $('goal').innerHTML=`✏️ <b>전향력 그리기 ${k+1} / ${DRILL.length}</b><br>보라색 바람이 불고 있어요. <b>${D.h==='N'?'북반구':'남반구'}</b>에서 이 바람에 작용하는 <b>전향력</b>을 그려 보세요.`;
+    $('ctrl').innerHTML=lvdots(DRILL.length,k)+`<div class="tip">💡 전향력은 바람의 속력은 바꾸지 않고 <b>방향만</b> 바꾸는 힘이에요. 그래서 바람과 <b>직각</b>이에요.</div>`;
+    say(k===0?'위의 <b>전향력</b> 버튼이 눌려 있지? 구름에서 바깥쪽으로 쭉 끌어서 화살표를 그려 봐! ✏️':D.h==='S'?'이번엔 <b>남반구</b>야! 남반구에서는 어떻게 달라질까? 🌏':'바람의 방향이 바뀌었어! 이번엔 어느 쪽일까? 🤔');
+    startDraw({origin:{x:W/2,y:H/2+10},hemi:D.h,target:'dir',wind:{ang:D.w,len:150},
+      forces:[{key:'cor',exp:D.w+(D.h==='N'?90:-90)}],ruleKeys:['cor'],
+      scene:()=>{sky(D.h==='N'?'#e0f2fe':'#fde7f3','#fffaf0');txt(D.h==='N'?'🌏 북반구':'🌏 남반구',24,46,D.h==='N'?'#2563eb':'#db2777',34);compass();},
+      onSolve:()=>{if(k===DRILL.length-1)cpDone();say(D.h==='N'?'정답! 북반구에서 전향력은 바람 방향의 <b>오른쪽 직각</b> 👉':'정답! 남반구에서는 반대로 <b>왼쪽 직각</b>이야 👈','wow');
+        nextBtn(k<DRILL.length-1?'다음 바람 ▶':'스테이지 클리어! 🎉',()=>{if(k<DRILL.length-1)drill(k+1);else clearStage(tries<=9?3:tries<=15?2:1,'공을 휘게 만든 힘 = <b>전향력</b><br>· 북반구: 운동 방향의 <b>오른쪽 직각</b> (남반구: 왼쪽)<br>· 속력은 그대로, <b>방향만</b> 바꾼다<br>· 고위도일수록, 빠를수록 크다 (적도·정지한 공기는 0)');});}});
+  }
+}
+
+/* ============ STAGE 2 · 상층의 곧은 바람 (지균풍) ============ */
+function stage2(){
+  const STEPS=['관찰','힘 그리기','풍력 발전소'];
+  const f0=.6,K=.8,X0=80,Y0=H/2+30,YS=.6,DUR=7;
+  const fOf=lat=>f0*Math.sin(lat*Math.PI/180)/Math.sin(Math.PI/4);
+  const LV=[{tgt:30,ctl:'gap',gap:150,lat:45,name:'Lv1 · 30 m/s 바람을 만들어 줘!'},
+            {tgt:50,ctl:'gap',gap:150,lat:45,name:'Lv2 · 태풍급 발전소! 50 m/s'},
+            {tgt:40,ctl:'lat',gap:66,lat:30,name:'Lv3 · 등고선은 고정! 위도를 옮겨 40 m/s'}];
+  let phase='A',seen={rest:0,slow:0,fast:0},kind=null,p=null,trail=[],t=0,gap=110,lat=45,li=0,banner=null,rot=0,judged=false,lastSp={};
+  const G=()=>9900/gap, F=()=>fOf(lat), VG=()=>G()/F();
+  const ms=v=>v/5;
+  function release(v0,k){kind=k;p={x:X0,dy:0,vx:v0*5,vy:0};trail=[];t=0;judged=false;banner=null;}
+  /* ---------- A. 관찰 ---------- */
+  function setupA(){phase='A';gap=110;lat=45;p=null;trail=[];stopDraw();frame=sim;steps(STEPS,0);cp('s2a');
+    $('goal').innerHTML='🔍 <b>관찰 미션</b> : 상공 5.5 km, 500 hPa 등압면 높이 지도예요. 북쪽(위)이 등고선 값이 <b>낮은 쪽</b>이에요. 공기를 <b>세 가지 방법</b>으로 출발시켜 보고, 바람이 결국 어떻게 되는지 지켜보세요!';
+    $('ctrl').innerHTML=`<button class="opt" id="bRest">🎈 ① 멈춰 있던 공기를 그냥 놓기 <span id="cR"></span></button>
+      <button class="opt" id="bSlow">🐢 ② 동쪽으로 느리게(10 m/s) 밀어 주기 <span id="cS"></span></button>
+      <button class="opt" id="bFast">🚀 ③ 동쪽으로 빠르게(60 m/s) 밀어 주기 <span id="cF"></span></button>
+      ${legend(['pgf','cor','vel'])}<div id="qA"></div><button class="big blue tonly" id="skipB">⏭ 관찰 건너뛰기</button>`;
+    const runA=(v0,k,id,msg)=>{if(p&&!judged)return;lockA(id);release(v0,k);say(msg);};
+    $('bRest').onclick=()=>runA(0,'rest','bRest','멈춰 있던 공기! 처음엔 어디로 갈까? 👀');
+    $('bSlow').onclick=()=>runA(10,'slow','bSlow','느리게 출발! 낮은 쪽으로 빨려 들어갈까? 🤔');
+    $('bFast').onclick=()=>runA(60,'fast','bFast','빠르게 출발! 계속 이 속도로 갈까? 🤔');
+    say('세 가지 방법을 모두 해 봐! 바람의 <b>마지막 모습</b>과 <b>마지막 속도</b>를 잘 봐야 해 👀');
+    $('skipB').onclick=()=>drawStep(0);
+  }
+  const ALAB={bRest:'🎈 ① 멈춰 있던 공기를 그냥 놓기',bSlow:'🐢 ② 동쪽으로 느리게(10 m/s) 밀어 주기',bFast:'🚀 ③ 동쪽으로 빠르게(60 m/s) 밀어 주기'};
+  function lockA(id){['bRest','bSlow','bFast'].forEach(b=>{const e=$(b);if(!e)return;e.disabled=true;e.style.opacity=b===id?1:.45;});
+    const e=$(id);if(e){e.dataset.keep=e.querySelector('span').textContent;e.innerHTML='⏳ 바람이 균형을 찾는 중… 끝까지 지켜봐요!<span></span>';}}
+  function unlockA(){['bRest','bSlow','bFast'].forEach(b=>{const e=$(b);if(!e)return;e.disabled=false;e.style.opacity=1;
+    if(e.dataset.keep!==undefined){e.innerHTML=ALAB[b]+' <span id="'+({bRest:'cR',bSlow:'cS',bFast:'cF'})[b]+'">'+e.dataset.keep+'</span>';delete e.dataset.keep;}});}
+  function finishA(){
+    unlockA();
+    const mark={rest:'cR',slow:'cS',fast:'cF'}[kind];seen[kind]=1;lastSp[kind]=Math.round(ms(Math.hypot(p.vx,p.vy)));
+    $(mark).textContent=' ✅ '+lastSp[kind]+' m/s';
+    const msg={rest:'① <b>기압 경도력</b> 때문에 낮은 쪽으로 출발 → ② 움직이자 <b>전향력</b>이 생겨 <b>오른쪽으로 휘고</b> → ③ 결국 <b>등고선과 나란히</b>!',
+      slow:'느리게 출발해도 낮은 쪽으로 빨려 들어가지 않았어! 낮은 쪽으로 가면서 <b>빨라지고</b>, 휘어서 결국 등고선과 나란히!',
+      fast:'빠르게 출발하면 전향력이 더 커서 처음엔 높은 쪽으로 휘지만, 점점 <b>느려지면서</b> 결국 등고선과 나란히!'}[kind];
+    say(msg+` <br>마지막 속도: <b>${lastSp[kind]} m/s</b>`,'wow');
+    if(seen.rest&&seen.slow&&seen.fast&&!$('qBtns')){
+      $('qA').innerHTML=`<div class="goal" id="qBtns" style="margin-top:6px">🧩 출발 속도가 달랐는데, 마지막 속도는?</div>
+        <button class="opt" data-i="0">느리게 출발한 바람이 가장 느리다</button><button class="opt" data-i="1">모두 같은 속도가 된다</button><button class="opt" data-i="2">빠르게 출발한 바람이 가장 빠르다</button>`;
+      document.querySelectorAll('#qA .opt').forEach(b=>b.onclick=()=>{tries++;setTry();
+        if(b.dataset.i==='1'){b.classList.add('right');confetti(18);cpTry(null);cpDone();
+          say('맞아! 🎉 어떻게 출발하든 바람은 결국 <b>같은 속도</b>로, <b>등고선과 나란하게</b> 불게 돼. 그 순간 바람이에게 작용하는 힘은 어떻게 되어 있을까? 직접 그려서 확인해 보자!','wow');
+          $('ctrl').innerHTML=`<div class="formula">🔍 관찰 결과<br>① ${lastSp.rest} m/s · ② ${lastSp.slow} m/s · ③ ${lastSp.fast} m/s<br><b>모두 같은 속도, 등고선과 나란히!</b></div>`;nextBtn('✏️ 힘 그리기 ▶',()=>drawStep(0));}
+        else{b.classList.add('wrong');cpTry('obs-q');say('세 번의 마지막 속도(✅ 옆 숫자)를 다시 비교해 봐! 👀','sad');}});}
+  }
+  /* ---------- 힘 그리기 ---------- */
+  const DRW=[{th:0},{th:-25}];
+  function drawStep(k){
+    steps(STEPS,1);const th=DRW[k].th;cp(k?'s2c':'s2b');
+    const u=[Math.cos(rad(th)),Math.sin(rad(th))],n=[Math.sin(rad(th)),-Math.cos(rad(th))]; // u: 등고선 방향, n: 낮은 쪽
+    const O={x:W/2,y:H/2+10};
+    $('goal').innerHTML=`✏️ <b>힘 그리기 ${k+1} / 2</b><br>바람이 등고선과 <b>나란하게, 일정한 속도로</b> 불고 있어요. 이 바람에 작용하는 <b>두 힘</b>을 그리고, <b>합력</b>을 확인해 보세요.`;
+    $('ctrl').innerHTML=lvdots(2,k)+`<div class="tip">① 방향 : 각 힘은 어느 쪽을 향할까?<br>② 길이 : 바람이 곧게, 일정하게 불려면 두 힘의 크기는?</div>`;
+    say(k===0?'관찰에서 본 <b>마지막 모습</b>이야. 빨간 <b>기압 경도력</b>부터 그려 봐! 등고선 숫자를 잘 봐 👀':'이번엔 등고선이 <b>비스듬해</b>! 규칙만 알면 어떤 모양이든 그릴 수 있어 💪');
+    startDraw({origin:O,target:'zero',tol:.2,wind:{ang:th,len:140},
+      forces:[{key:'pgf',exp:vAng(n)},{key:'cor',exp:vAng(n)+180}],
+      scene:()=>contourScene(O,u,n,90,5700,60,'m'),
+      onSolve:skip=>{cpDone();say('두 화살표의 <b>방향이 반대</b>이고 <b>길이가 같아</b> → <b>합력 = 0</b>!<br>합력이 0이면 바람은 방향도 속력도 바뀌지 않고 등고선과 나란하게 불어. 이 바람이 <b>지균풍</b>이야.<br><b>기압 경도력 = 전향력</b>','wow');
+        nextBtn(k===0?'다음 그리기 ▶':'⚡ 풍력 발전소 ▶',()=>{if(k===0)drawStep(1);else setupB();});}});
+  }
+  /* ---------- B. 풍력 발전소 ---------- */
+  function setupB(){phase='B';li=0;stopDraw();frame=sim;steps(STEPS,2);cp('s2d');setL();}
+  function setL(){const L=LV[li];gap=L.gap;lat=L.lat;p=null;trail=[];banner=null;
+    $('goal').innerHTML='⚡ <b>풍력 발전소 미션</b> : 발전기를 돌릴 바람을 만들어요! 바람의 속도는 직접 정할 수 없어요. <b>원인</b>을 바꿔서 원하는 속도의 지균풍을 만들어 보세요.';
+    $('ctrl').innerHTML=`${lvdots(3,li)}<div style="text-align:center;font-size:23px">${L.name}</div>
+      ${L.ctl==='gap'?`<label>📏 등고선 간격 (위도 ${lat}° 고정)</label><input type="range" id="sl" min="45" max="170" value="${gap}"><div class="val" id="slT"></div>`
+        :`<label>🌍 위도 (등고선 간격 고정)</label><input type="range" id="sl" min="20" max="80" value="${lat}"><div class="val" id="slT"></div>`}
+      <button class="big" id="go2">💨 공기 놓기!</button><div class="formula" id="fm" style="display:none"></div><button class="big blue tonly" id="skipLevel">⏭ 다음 단계로</button>`;
+    const upd=()=>{if(L.ctl==='gap'){gap=+$('sl').value;$('slT').textContent=gap<80?'촘촘해요':gap<125?'보통':'넓어요';}
+      else{lat=+$('sl').value;$('slT').textContent='북위 '+lat+'°';}p=null;trail=[];banner=null;if($('go2')){$('go2').disabled=false;$('go2').textContent='💨 공기 놓기!';}};
+    $('sl').oninput=upd;upd();
+    $('skipLevel').onclick=()=>{if(li<LV.length-1){li++;setL();}else clearStage(1,'(교사 모드 건너뛰기)');};
+    $('go2').onclick=()=>{if(p&&!judged)return;tries++;setTry();release(0,'B');$('go2').disabled=true;$('go2').textContent='⏳ 균형을 찾는 중…';say('공기를 놓았어! 바람이 균형을 찾을 때까지 기다려 봐 ⏳');};
+    say(li===0?'목표는 <b>30 m/s</b>! 등고선 간격을 정하고 공기를 놓아 봐. 바람이 스스로 찾아가는 속도가 목표와 맞으면 발전기가 돌아가! ⚡':
+        li===1?'이번엔 <b>50 m/s</b>! 더 센 바람이 필요해. 등고선 간격을 어떻게 해야 할까?':
+        'Lv3! 등고선 간격은 <b>고정</b>이야. 대신 발전소의 <b>위도</b>를 옮길 수 있어. 40 m/s를 만들려면 북쪽? 남쪽?');
+  }
+  function judgeB(){if($('go2')){$('go2').disabled=false;$('go2').textContent='💨 공기 놓기!';}const L=LV[li],sp=Math.round(ms(Math.hypot(p.vx,p.vy))),d=sp-L.tgt;
+    if(Math.abs(d)<=3){cpTry(null);banner=['⚡ 발전 성공! '+sp+' m/s','#059669'];confetti(22);
+      $('fm').style.display='block';
+      $('fm').innerHTML='<b>지균풍의 힘의 관계</b><br><span style="color:#f43f5e">기압 경도력</span> = <span style="color:#3b82f6">전향력</span><br>g·Δz/Δx = 2vΩ sinφ<br>⇒ <b style="font-size:24px">v = g·Δz/Δx ÷ 2Ω sinφ</b><br><small>원인(등고선 간격, 위도)이 결과(풍속 v)를 정해요</small>';
+      say(['성공! 등고선 간격이 바람의 세기를 정했어 🎉','성공! 등고선이 <b>촘촘할수록</b> 기압 경도력이 커서 → 균형을 이루는 지균풍도 <b>빨라져</b> 💨','성공! <b>저위도</b>로 갈수록 전향력(2vΩ sinφ)이 약해서, 같은 기압 경도력에서도 <b>더 빠른</b> 바람이 돼야 균형이 맞아 🌍'][li],'wow');
+      setTimeout(()=>{if(cur!==1||phase!=='B'||!$('sl'))return;li++;if(li<3)setL();
+        else clearStage(tries<=10?3:tries<=16?2:1,'<b>지균풍</b> : 기압 경도력 = 전향력 → 합력 0 → 등고선과 나란하게!<br>풍속은 <b>등고선 간격</b>(기압 경도력)과 <b>위도</b>가 정해요.');},2800);}
+    else{cpTry(d<0?'slow':'fast');banner=[(d<0?'🐢 바람이 약해요 ':'🌪️ 바람이 너무 세요 ')+sp+' m/s',d<0?'#2563eb':'#e11d48'];
+      say(LV[li].ctl==='gap'?(d<0?'바람이 <b>약해</b>. 기압 경도력을 키우려면 등고선 간격을 어떻게 해야 할까?':'바람이 <b>너무 세</b>! 기압 경도력을 줄여 보자. 등고선 간격은?'):
+        (d<0?'바람이 <b>약해</b>. 전향력이 세서 느린 속도로 균형이 맞아 버렸어. 위도를 어느 쪽으로 옮길까?':'바람이 <b>너무 세</b>! 전향력을 키우면 더 느린 속도로 균형이 맞아. 위도를 어느 쪽으로?'),'sad');}
+  }
+  function sim(dt){
+    const g=G(),f=F(),vg=VG();
+    if(p&&!judged){
+      for(let i=0;i<10;i++){const h=dt*1.5/10;
+        const ax=f*(-p.vy)-K*(p.vx-vg), ay=-g+f*p.vx-K*p.vy;
+        p.vx+=ax*h;p.vy+=ay*h;p.x+=p.vx*h;p.dy+=p.vy*h;}
+      t+=dt*1.5;
+      if(p.x>W-30){p.x=X0;trail.push(null);}
+      trail.push([p.x,Y0+p.dy*YS]);if(trail.length>900)trail.shift();
+      if(t>=DUR){judged=true;phase==='A'?finishA():judgeB();}
+    }
+    sky('#e0f2fe','#f0f9ff');
+    ctx.fillStyle='rgba(254,226,226,.6)';ctx.fillRect(0,0,W,54);ctx.fillStyle='rgba(219,234,254,.7)';ctx.fillRect(0,H-50,W,50);
+    txt('북 · 등고선 값이 낮은 쪽',W/2,38,'#e11d48',26,'center');txt('남 · 등고선 값이 높은 쪽',W/2,H-16,'#2563eb',26,'center');
+    const gp=gap;
+    for(let i=-6;i<=6;i++){const y=Y0+i*gp+gp/2;if(y<58||y>H-54)continue;
+      ctx.strokeStyle='#93c5fd';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
+      txt((5640+i*60)+' m',10,y-8,'#3b82f6',20);}
+    ctx.strokeStyle='#f472b6';ctx.lineWidth=5;ctx.lineCap='round';ctx.setLineDash([2,10]);ctx.beginPath();let on=false;
+    trail.forEach(q=>{if(!q){on=false;return;}on?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);on=true;});ctx.stroke();ctx.setLineDash([]);
+    const P=p?{x:p.x,y:Y0+p.dy*YS,vx:p.vx,vy:p.vy}:{x:X0,y:Y0,vx:0,vy:0};
+    const sc=.5;
+    arrow(P.x,P.y,0,-g*sc,COL.pgf,7);
+    if(Math.hypot(P.vx,P.vy)>2)arrow(P.x,P.y,-P.vy*f*sc,P.vx*f*sc,COL.cor,7);
+    if(Math.hypot(P.vx,P.vy)>2)arrow(P.x,P.y,P.vx*.3,P.vy*.3,COL.vel,4);
+    ctx.save();ctx.strokeStyle='#94a3b8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(P.x,P.y+20);ctx.quadraticCurveTo(P.x-6,P.y+30,P.x,P.y+40);ctx.stroke();
+    ctx.fillStyle='#fb7185';ctx.beginPath();ctx.ellipse(P.x,P.y,17,21,0,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.7)';ctx.beginPath();ctx.ellipse(P.x-6,P.y-8,4,7,-.5,0,7);ctx.fill();ctx.restore();
+    const cor=Math.hypot(P.vx,P.vy)*f,bx=W-270,by=70,sp=ms(Math.hypot(P.vx,P.vy));
+    ctx.fillStyle='rgba(255,255,255,.95)';ctx.beginPath();ctx.roundRect(bx-12,by-12,262,118,16);ctx.fill();
+    txt('기압 경도력',bx,by+16,COL.pgf,20,'left',false);ctx.fillStyle=COL.pgf;ctx.beginPath();ctx.roundRect(bx+112,by+3,Math.min(130,g*.55),15,7);ctx.fill();
+    txt('전향력',bx,by+50,COL.cor,20,'left',false);ctx.fillStyle=COL.cor;ctx.beginPath();ctx.roundRect(bx+112,by+37,Math.max(0,Math.min(130,cor*.55)),15,7);ctx.fill();
+    txt('풍속 '+Math.round(sp)+' m/s',bx,by+92,'#8b5cf6',26,'left',false);
+    if(phase==='B'&&li<LV.length){const tx=W-90,ty=H-160;rot+=dt*(p?sp:0)*.25;
+      ctx.strokeStyle='#cbd5e1';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx,H-50);ctx.stroke();
+      for(let k=0;k<3;k++){const a=rot+k*2.094;ctx.save();ctx.translate(tx,ty);ctx.rotate(a);ctx.fillStyle='#fff';ctx.strokeStyle='#94a3b8';ctx.lineWidth=2;
+        ctx.beginPath();ctx.ellipse(0,-30,7,30,0,0,7);ctx.fill();ctx.stroke();ctx.restore();}
+      ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.arc(tx,ty,7,0,7);ctx.fill();
+      txt('목표 '+LV[li].tgt+' m/s',tx,ty-74,'#d97706',24,'center');}
+    if(!p)txt(phase==='A'?'▶ 오른쪽에서 출발 방법을 골라요':'▶ 오른쪽에서 조절하고 「공기 놓기!」',W/2,H/2-60,'#64748b',24,'center');
+    else if(!judged)txt('바람이 균형을 찾는 중…',W/2,H-66,'#64748b',22,'center');
+    if(banner){ctx.save();ctx.globalAlpha=.94;ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(W/2-270,H/2-176,540,76,24);ctx.fill();ctx.restore();
+      txt(banner[0],W/2,H/2-126,banner[1],36,'center',false);}
+  }
+  setupA();
+}
+/* 곧은 등고선(등압선) 배경 : u = 선의 방향, n = 값이 낮은 쪽 */
+function contourScene(O,u,n,gap,base,step,unit,top='#e0f2fe',bot='#f0f9ff'){
+  sky(top,bot);
+  for(let k=-5;k<=5;k++){const d=k*gap-gap/2,P0=[O.x+n[0]*d,O.y+n[1]*d];
+    ctx.strokeStyle='#93c5fd';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(P0[0]-u[0]*1400,P0[1]-u[1]*1400);ctx.lineTo(P0[0]+u[0]*1400,P0[1]+u[1]*1400);ctx.stroke();
+    if(Math.abs(u[0])>.3){const tt=(16-P0[0])/u[0],y=P0[1]+tt*u[1];if(y>30&&y<H-14)txt((base-k*step)+' '+unit,16,y-8,'#3b82f6',20);}}
+  const lo=[O.x+n[0]*200-u[0]*250,O.y+n[1]*200-u[1]*250],hi=[O.x-n[0]*200+u[0]*250,O.y-n[1]*200+u[1]*250];
+  txt('값이 낮은 쪽',lo[0],lo[1]+8,'#e11d48',26,'center');txt('값이 높은 쪽',hi[0],hi[1]+8,'#2563eb',26,'center');
+  compass();
+}
+
+/* ============ STAGE 3 · 둥근 길 레이스 (경도풍) ============ */
+function stage3(){
+  const STEPS=['저기압 힘 그리기','고기압 힘 그리기','레이스'];
+  /* --- 힘 그리기 --- */
+  function drawStep(mode){
+    const low=mode==='low';steps(STEPS,low?0:1);cp(low?'s3a':'s3b');
+    const C={x:W/2-170,y:H/2+10},RR=250,O={x:C.x+RR,y:C.y};
+    $('goal').innerHTML=`✏️ <b>${low?'저기압':'고기압'} 둘레를 도는 바람</b><br>바람이 등고선을 따라 <b>${low?'시계 반대 방향':'시계 방향'}</b>으로 둥글게 불고 있어요. 두 힘을 그리고 <b>합력</b>을 확인해 보세요.`;
+    $('ctrl').innerHTML=`<div class="tip">🤔 곧게 불던 지균풍은 합력이 0이었어. 그런데 <b>둥글게</b> 돌려면 합력이 어느 쪽을 향해야 할까?</div>`;
+    say(low?'둥근 등고선이야! 가운데가 <b>저기압</b>(값이 가장 낮은 곳)이야. 먼저 두 힘의 <b>방향</b>을 생각하고, 그다음 <b>길이</b>를 생각해 봐 ✏️':'이번엔 가운데가 <b>고기압</b>(값이 가장 높은 곳)! 바람은 <b>시계 방향</b>으로 돌아. 힘의 방향이 어떻게 바뀔까? 🤔');
+    const vals=low?[5340,5400,5460,5520,5580]:[5580,5520,5460,5400,5340];
+    startDraw({origin:O,target:'center',centerAng:180,wind:{ang:low?-90:90,len:130},ruleKeys:['pgf','cor','cen'],
+      forces:[{key:'pgf',exp:low?180:0},{key:'cor',exp:low?0:180}],
+      scene:()=>{sky(low?'#fdf2f8':'#fffbeb','#fff7ed');
+        for(let i=1;i<=5;i++){const r=i*50;ctx.strokeStyle='#c4b5fd';ctx.lineWidth=i===5?5:2.5;ctx.beginPath();ctx.arc(C.x,C.y,r,0,7);ctx.stroke();
+          txt(vals[i-1]+' m',C.x,C.y-r+7,'#7c3aed',18,'center');}
+        txt(low?'저':'고',C.x,C.y+18,low?'#e11d48':'#2563eb',54,'center');compass();},
+      extra:()=>{txt(low?'기압 경도력 − 전향력 = 구심력':'전향력 − 기압 경도력 = 구심력',W/2,H-24,'#b45309',28,'center');},
+      onSolve:()=>{cpDone();say(low?'합력(노란색)이 <b>중심</b>을 향해! 이 합력이 바람을 둥글게 휘게 하는 <b>구심력</b>이야.<br><b>기압 경도력 &gt; 전향력</b> → 기압 경도력 − 전향력 = 구심력<br>이 바람이 <b>저기압성 경도풍</b>이야 🌀'
+          :'합력이 <b>중심</b>을 향해! 고기압에서는 기압 경도력이 바깥쪽, 전향력이 안쪽이라서<br><b>전향력 &gt; 기압 경도력</b> → 전향력 − 기압 경도력 = 구심력<br>이 바람이 <b>고기압성 경도풍</b>이야 ☀️','wow');
+        nextBtn(low?'고기압도 그려 보기 ▶':'🏎️ 레이스로 확인하기 ▶',()=>{if(low)drawStep('high');else race();});}});
+  }
+  /* --- 레이스 --- */
+  function race(){
+    stopDraw();steps(STEPS,2);cp('s3c');
+    const G=.6,f=1,r0=4,U=50,cx=W/2,cy=H/2;
+    let mode='low',spd=30,p=null,rec={low:null,high:null},rankDone=false;
+    $('goal').innerHTML='🎯 <b>미션</b> : 둥근 트랙을 한 바퀴! 트랙에서 벗어나지 않는 <b>출발 속도</b>를 찾아라. 🌀저기압 트랙과 ☀️고기압 트랙 모두 성공하면 클리어! (두 트랙의 기압 경도력 크기는 같아요)';
+    $('ctrl').innerHTML=`<div class="row"><button class="tog on" id="tL">🌀 저기압 트랙</button><button class="tog" id="tH">☀️ 고기압 트랙</button></div>
+     <label>출발 속도</label><input type="range" id="spd" min="15" max="45" step="0.5" value="30"><div class="val" id="spdT">30 m/s</div>
+     <button class="big" id="go3">🏎️ 출발!</button>${legend(['pgf','cor','cen','vel'])}
+     <div class="formula" id="board">🏁 <b>기록판</b><br>🌀 저기압 트랙 : <b id="rL">?</b><br>📏 곧은 길(지균풍) : <b>30 m/s</b><br>☀️ 고기압 트랙 : <b id="rH">?</b></div>`;
+    say('힘 그리기에서 예측한 대로일까? 같은 기압 경도력에서 곧은 길(지균풍)은 30 m/s였어. <b>둥근 길에서 균형을 이루는 속도</b>는? 🏎️');
+    const setM=m=>{mode=m;$('tL').classList.toggle('on',m==='low');$('tH').classList.toggle('on',m==='high');p=null;};
+    $('tL').onclick=()=>setM('low');$('tH').onclick=()=>setM('high');
+    $('spd').oninput=e=>{spd=+e.target.value;$('spdT').textContent=spd+' m/s';p=null;};
+    $('go3').onclick=()=>{tries++;setTry();const s=mode==='low'?1:-1;
+      p={x:r0,y:0,vx:0,vy:-s*spd/50,ang:0,pa:0,dev:0,end:false,tr:[]};};
+    frame=dt=>{
+      const s=mode==='low'?1:-1;
+      if(p&&!p.end){
+        for(let i=0;i<50;i++){const h=dt*5.5/50;
+          const r=Math.hypot(p.x,p.y),ux=p.x/r,uy=p.y/r;
+          const ax=-s*G*ux+f*(-p.vy), ay=-s*G*uy+f*p.vx;
+          p.vx+=ax*h;p.vy+=ay*h;p.x+=p.vx*h;p.y+=p.vy*h;
+          const a=Math.atan2(p.y,p.x);let d=a-p.pa;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;p.ang+=Math.abs(d);p.pa=a;
+          p.dev=Math.max(p.dev,Math.abs(Math.hypot(p.x,p.y)-r0)/r0);}
+        p.tr.push([p.x,p.y]);
+        if(p.dev>.09){p.end=true;cpTry('race');const r=Math.hypot(p.x,p.y);
+          const out=r>r0;say(out?`이 속도로는 둥근 길에서 <b>균형을 이룰 수 없어</b> (바깥으로 벗어남). `+(s===1?'저기압에선 바깥쪽 힘이 <b>전향력</b>! 전향력을 줄이려면 속도를 <b>낮춰</b> 봐.':'고기압에선 바깥쪽 힘이 <b>기압 경도력</b>. 안쪽으로 끄는 전향력을 키우려면 속도를 <b>올려</b> 봐!'):
+            `이 속도로는 둥근 길에서 <b>균형을 이룰 수 없어</b> (안쪽으로 벗어남). `+(s===1?'안쪽으로 끄는 기압 경도력을 전향력이 못 버텼어. 속도를 <b>올려</b> 봐.':'안쪽으로 끄는 전향력이 너무 셌어. 속도를 <b>낮춰</b> 봐.'),'sad');}
+        else if(p.ang>=2*Math.PI){p.end=true;
+          if(p.dev<=.022){cpTry(null);rec[mode]=spd;$(mode==='low'?'rL':'rH').textContent=spd+' m/s ✅';confetti(18);
+            say(`한 바퀴 성공!! 🏆 ${mode==='low'?'저기압':'고기압'} 트랙 기록 <b>${spd} m/s</b>! `+(rec.low&&rec.high?'기록판을 봐! 누가 제일 빨라?':'이제 다른 트랙도 도전!'),'wow');
+            if(rec.low&&rec.high&&!rankDone)setTimeout(()=>{if(cur===2&&$('rL'))rank();},1600);}
+          else say('아슬아슬하게 돌긴 했는데 트랙에서 조금 흔들렸어! 속도를 살짝만 조정해 보자 😅');}
+      }
+      sky('#fdf2f8','#fff7ed');
+      for(let i=1;i<=5;i++){ctx.strokeStyle='#c4b5fd';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,i*U,0,7);ctx.stroke();}
+      ctx.strokeStyle='#64748b';ctx.lineWidth=26;ctx.beginPath();ctx.arc(cx,cy,r0*U,0,7);ctx.stroke();
+      ctx.strokeStyle='#fde047';ctx.lineWidth=3;ctx.setLineDash([14,12]);ctx.beginPath();ctx.arc(cx,cy,r0*U,0,7);ctx.stroke();ctx.setLineDash([]);
+      for(let k=0;k<4;k++){ctx.fillStyle=k%2?'#fff':'#1e293b';ctx.fillRect(cx+r0*U-13+k*6.5,cy-3,6.5,6);}
+      txt(s===1?'저':'고',cx,cy+18,s===1?'#e11d48':'#2563eb',54,'center');
+      txt(s===1?'저기압 트랙 · 시계 반대 방향':'고기압 트랙 · 시계 방향',20,40,'#7c3aed',28);
+      if(p&&p.tr.length){ctx.strokeStyle='#f472b6';ctx.lineWidth=5;ctx.beginPath();p.tr.forEach(([x,y],i)=>i?ctx.lineTo(cx+x*U,cy+y*U):ctx.moveTo(cx+x*U,cy+y*U));ctx.stroke();}
+      const P=p||{x:r0,y:0,vx:0,vy:-s*spd/50};
+      const r=Math.hypot(P.x,P.y),ux=P.x/r,uy=P.y/r,X=cx+P.x*U,Y=cy+P.y*U,A=120;
+      const pg=[-s*G*ux,-s*G*uy],co=[-f*P.vy,f*P.vx];
+      arrow(X,Y,pg[0]*A,pg[1]*A,COL.pgf,7);arrow(X,Y,co[0]*A,co[1]*A,COL.cor,7);
+      arrow(X,Y,(pg[0]+co[0])*A*3,(pg[1]+co[1])*A*3,COL.cen,4);
+      arrow(X,Y,P.vx*90,P.vy*90,COL.vel,4);
+      cloud(X,Y,1.1);
+      txt('노란 화살표(합력)가 트랙 안쪽을 향해야 돌 수 있어요',20,H-18,'#b45309',22);
+    };
+    function rank(){rankDone=true;
+      modal(`<h2>🏆 순위를 맞혀 봐!</h2><p>기압 경도력이 같을 때, <b>가장 빠른 바람</b>부터 순서대로 눌러요.</p>
+       <div style="display:flex;flex-direction:column;gap:8px" id="rk">
+       <button class="opt" data-k="L">🌀 저기압성 경도풍</button><button class="opt" data-k="G">📏 지균풍</button><button class="opt" data-k="H">☀️ 고기압성 경도풍</button></div><p id="rkm"></p>`);
+      const ans=['H','G','L'];let pos=0;
+      document.querySelectorAll('#rk .opt').forEach(b=>b.onclick=()=>{if(b.classList.contains('right'))return;
+        if(b.dataset.k===ans[pos]){b.classList.add('right');b.innerHTML=(pos+1)+'등 · '+b.innerHTML;pos++;
+          if(pos===3){$('rkm').innerHTML=`<div class="formula" style="text-align:left;font-size:20px">
+            <b>왜 그럴까? (그린 화살표를 떠올려 봐!)</b><br>둥글게 돌려면 <b>중심을 향하는 합력(구심력)</b>이 필요해요. 전향력은 풍속에 비례해요.<br>
+            🌀 <b>저기압</b>: 기압 경도력 − 전향력 = 구심력<br>&nbsp;&nbsp;→ 전향력이 작아도 됨 → <b>느린 바람</b><br>
+            ☀️ <b>고기압</b>: 전향력 − 기압 경도력 = 구심력<br>&nbsp;&nbsp;→ 전향력이 커야 함 → <b>빠른 바람</b><br>
+            ✨ <b>고기압성 경도풍 &gt; 지균풍 &gt; 저기압성 경도풍</b></div><button class="big green" id="rkok">알겠어! ▶</button>`;
+            $('rkok').onclick=()=>clearStage(tries<=10?3:tries<=16?2:1,'둥근 등고선을 따라 부는 바람 = <b>경도풍</b><br>기압 경도력과 전향력의 <b>차이</b>가 구심력으로 작용<br>고기압성 &gt; 지균풍 &gt; 저기압성');}
+        }else{cpTry('rank');b.classList.add('wrong');setTimeout(()=>b.classList.remove('wrong'),400);$('rkm').textContent='기록판의 속도를 다시 봐! 👀';}
+      });}
+    const sk=document.createElement('button');sk.className='big blue tonly';sk.textContent='⏭ 순위로';sk.onclick=()=>{rec={low:21,high:39};rank();};$('ctrl').appendChild(sk);
+  }
+  drawStep('low');
+}
+
+/* ============ STAGE 4 · 땅 위의 바람 (지상풍) ============ */
+function stage4(){
+  const STEPS=['힘 그리기','장소별 바람','저기압·고기압'];
+  const G=60,f=.6,K={up:0,sea:.2,land:.45};
+  const NAME={up:'☁️ 높은 하늘 (마찰 없음)',sea:'🌊 바다 위 (마찰 조금)',land:'🏙️ 도시·육지 (마찰 많이)'};
+  const ANG=[0,18,37];
+  const order=['up','sea','land'].sort(()=>Math.random()-.5);
+  let phase='A',ai=0,surf=order[0],answered=false,firstOK=0,qtry=0,ps=[],puffs=[],spawn=0,tt=0;
+  const thetaOf=k=>Math.atan2(k,f);
+  function steady(k){const V=G/Math.hypot(f,k),th=thetaOf(k);return {vx:V*Math.cos(th),vy:-V*Math.sin(th)};}
+  function isobars(){for(let i=-2;i<=2;i++){const y=H/2+20+i*100;ctx.strokeStyle='#93c5fd';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();txt((1008+i*4)+' hPa',12,y-8,'#3b82f6',20);}}
+  /* --- 힘 그리기 (교과서 그림 III-30) --- */
+  function drawStep(){
+    steps(STEPS,0);cp('s4a');
+    const O={x:W/2-20,y:H/2-10},a=-30;
+    $('goal').innerHTML='✏️ <b>지표 근처의 바람</b><br>높이 약 1 km 아래에서는 <b>마찰력</b>이 더해져요. 바람이 등압선을 <b>비스듬히 가로질러</b> 일정하게 불고 있어요. <b>세 힘</b>을 그리고 합력을 확인해 보세요.';
+    $('ctrl').innerHTML=`<div class="tip">💡 순서 추천: 🔴 기압 경도력 → 🔵 전향력 → 🟢 마찰력<br>세 화살표를 이어 붙였을 때 처음 자리로 돌아오면 합력 = 0!</div>`;
+    say('이제 땅 근처로 내려왔어! 지상 일기도는 <b>등압선</b>(hPa)이야. 보라색 바람이 등압선을 비스듬히 지나가고 있지? 세 힘을 하나씩 그려 봐 ✏️');
+    startDraw({origin:O,target:'zero',tol:.28,angTol:20,wind:{ang:a,len:140,label:'지상풍'},ruleKeys:['pgf','cor','fri'],
+      forces:[{key:'pgf',exp:-90},{key:'cor',exp:a+90},{key:'fri',exp:a+180}],
+      scene:()=>{sky('#f0f9ff','#fde68a');isobars();
+        txt('북 · 저기압 쪽',20,40,'#e11d48',26,'left');
+        ctx.font='38px serif';['🏢','🌳','🏠','🏬','🌳','🏢','🏠','🌲','🏬'].forEach((e,i)=>ctx.fillText(e,30+i*100,H-12-(i%2)*24));compass();},
+      extra:()=>{const c=DR.vec.cor,fr=DR.vec.fri,O2=DR.origin;arrow(O2.x,O2.y,c[0]+fr[0],c[1]+fr[1],'#0f766e',6,'전향력+마찰력',[12,8]);},
+      onSolve:()=>{cpDone();say('세 힘의 합력 = 0! 🎉<br><b>전향력과 마찰력의 합력</b>(청록 점선)이 <b>기압 경도력</b>과 평형을 이뤄.<br>마찰 때문에 바람이 느려지고 → 전향력이 약해져서 → 바람이 등압선을 가로질러 <b>저기압 쪽</b>으로 불어. 이 바람이 <b>지상풍</b>이야!','wow');
+        nextBtn('장소별 바람 맞히기 ▶',()=>{stopDraw();setupA();});}});
+  }
+  function setupA(){phase='A';steps(STEPS,1);if(ai===0)cp('s4b');frame=sim;surf=order[ai];answered=false;qtry=0;const v=steady(K[surf]);ps=[{x:90,y:H/2+80,vx:v.vx,vy:v.vy,tr:[]}];
+    $('goal').innerHTML='🔍 <b>미션</b> : 마찰력은 지표면이 <b>거칠수록</b> 커요. 장소마다 진짜 바람의 방향을 맞혀라!';
+    $('ctrl').innerHTML=`${lvdots(3,ai)}<div style="text-align:center;font-size:25px">${NAME[surf]}</div>
+     <p style="font-size:21px">이곳에서 부는 진짜 바람은 ①②③ 중 어느 것일까?</p><div class="row">${[0,1,2].map(i=>`<button class="tog" data-i="${i}" style="font-size:26px">${'①②③'[i]}</button>`).join('')}</div>${legend(['pgf','cor','fri','vel'])}`;
+    document.querySelectorAll('#ctrl .tog').forEach(b=>b.onclick=()=>{if(answered)return;tries++;setTry();qtry++;
+      const want=surf==='up'?0:surf==='sea'?1:2;
+      if(+b.dataset.i===want){cpTry(null);answered=true;b.classList.add('on');if(qtry===1)firstOK++;
+        say(['정답! 마찰이 없으면 두 힘이 평형 → <b>등압선과 나란히</b> (지균풍) 😎','정답! 바다는 마찰이 조금 → 바람이 조금 느려지고 <b>저기압 쪽으로 살짝</b> 기울어 🌊','정답! 육지는 마찰이 커서 → 많이 느려지고 <b>저기압 쪽으로 크게</b> 기울어 🏙️'][want]+
+          '<br><small>마찰력이 클수록 바람이 등압선과 이루는 <b>각이 커져</b>.</small>','wow');
+        nextBtn('다음 ▶',()=>{ai++;if(ai<3)setupA();else{cpDone();setupB();}});}
+      else{cpTry('surf');b.classList.add('wrong');say('음… 다시 생각해 봐! 마찰이 있으면 바람이 느려지고 → 전향력은? 🤔','sad');}
+    });
+    say(`${NAME[surf]}! 왼쪽 화면의 화살표 ①②③ 중 진짜 바람을 골라 봐. 위쪽이 저기압 쪽이야.`);
+  }
+  const BQ=[{c:'low',q:'🌀 지상 저기압! 바람이 모이는 중심에서 공기는 어디로 갈까?',o:['⬆ 위로 올라간다','⬇ 아래로 내려간다'],a:0,
+             e:'정답! 사방에서 모여든 공기는 갈 곳이 <b>위</b>뿐! → <b>상승 기류</b> → 구름이 생겨요 ☁️ (왜 구름이 생길까? → 3차시!)'},
+            {c:'high',q:'☀️ 지상 고기압! 바람이 사방으로 퍼져 나가요. 빈자리는 어디서 채워질까?',o:['⬆ 아래에서 올라온다','⬇ 위에서 내려온다'],a:1,
+             e:'정답! 위에서 공기가 <b>내려와</b> 채워요 → <b>하강 기류</b> → 맑은 날씨 ☀️'}];
+  let bi=0,bAns=false;
+  function setupB(){phase='B';steps(STEPS,2);if(bi===0)cp('s4c');frame=sim;ps=[];puffs=[];spawn=0;bAns=false;const Q=BQ[bi];
+    $('goal').innerHTML='🔍 <b>미션</b> : 지상의 저기압과 고기압 주변에서 바람이 어떻게 움직이는지 관찰해요.';
+    $('ctrl').innerHTML=`<div style="text-align:center;font-size:25px">${Q.c==='low'?'🌀 저기압 관찰':'☀️ 고기압 관찰'} (육지)</div><p style="font-size:21px">${Q.q}</p>
+      <div style="display:flex;flex-direction:column;gap:8px">${Q.o.map((o,i)=>`<button class="opt" data-i="${i}">${o}</button>`).join('')}</div>`;
+    say(Q.c==='low'?'지상 저기압 주변의 바람을 봐! 시계 반대 방향으로 돌면서… 어디로 모이고 있지? 👀':'이번엔 지상 고기압! 시계 방향으로 돌면서 바람이 어떻게 움직이지? 👀');
+    document.querySelectorAll('#ctrl .opt').forEach(b=>b.onclick=()=>{if(bAns)return;tries++;setTry();
+      if(+b.dataset.i===Q.a){cpTry(null);bAns=true;b.classList.add('right');if(!b.dataset.miss)firstOK++;say(Q.e,'wow');
+        nextBtn(bi===0?'다음 ▶':'클리어! 🎉',()=>{bi++;if(bi<2)setupB();else clearStage(firstOK>=5?3:firstOK>=3?2:1,'<b>지상풍</b> : 전향력과 마찰력의 합력이 기압 경도력과 평형<br>→ 등압선을 가로질러 저기압 쪽으로!<br><b>저기압은 모이고(상승)</b>, <b>고기압은 퍼진다(하강)</b>');});}
+      else{cpTry('lowhigh');b.classList.add('wrong');document.querySelectorAll('#ctrl .opt').forEach(x=>x.dataset.miss=1);say('바람 입자들이 어디로 가는지 다시 봐! 👀','sad');}
+    });}
+  const cx=W/2,cy=H/2;
+  function sim(dt){tt+=dt;
+    const k=phase==='A'?K[surf]:K.land;
+    if(phase==='A'){
+      sky(surf==='up'?'#e0f2fe':'#f0f9ff',surf==='up'?'#f0f9ff':surf==='sea'?'#bae6fd':'#fde68a');
+      if(surf==='sea'){ctx.fillStyle='rgba(56,189,248,.25)';for(let i=0;i<12;i++){ctx.beginPath();ctx.arc((i*90+tt*30)%W,H-30-(i%3)*40,30,Math.PI,0);ctx.fill();}}
+      if(surf==='land'){ctx.font='40px serif';['🏢','🌳','🏠','🏬','🌳','🏢','🏠','🌲','🏬','🏢'].forEach((e,i)=>ctx.fillText(e,40+i*90,H-20-(i%2)*30));}
+      txt('북 · 저기압 쪽',W/2,40,'#e11d48',26,'center');
+      isobars();
+      const p=ps[0];
+      if(answered){
+        for(let i=0;i<6;i++){const h=dt/6;const ax=f*(-p.vy)-k*p.vx,ay=-G+f*p.vx-k*p.vy;p.vx+=ax*h;p.vy+=ay*h;p.x+=p.vx*h;p.y+=p.vy*h;}
+        p.tr.push([p.x,p.y]);if(p.x>W-30||p.y<60){const v=steady(k);Object.assign(p,{x:90,y:H/2+80,vx:v.vx,vy:v.vy,tr:[]});}
+        ctx.strokeStyle='#f472b6';ctx.lineWidth=5;ctx.setLineDash([2,10]);ctx.lineCap='round';ctx.beginPath();p.tr.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke();ctx.setLineDash([]);
+        const A=1.3;arrow(p.x,p.y,0,-G*A,COL.pgf,7);arrow(p.x,p.y,-p.vy*f*A,p.vx*f*A,COL.cor,7);if(k)arrow(p.x,p.y,-p.vx*k*A,-p.vy*k*A,COL.fri,7);arrow(p.x,p.y,p.vx*.7,p.vy*.7,COL.vel,4);
+        cloud(p.x,p.y,1.2);
+        const ang=Math.round(Math.atan2(-p.vy,p.vx)*180/Math.PI),V=Math.round(Math.hypot(p.vx,p.vy)/3.33);
+        ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(W-270,64,250,74,14);ctx.fill();
+        txt(`등압선과 이루는 각 ${ang}°`,W-258,94,'#7c3aed',22,'left',false);txt(`풍속 ${V} m/s`,W-258,126,'#7c3aed',22,'left',false);
+      }else{
+        const ox=W/2-80,oy=H/2+60;
+        [0,1,2].forEach(i=>{const a=ANG[i]*Math.PI/180;arrow(ox,oy,210*Math.cos(a),-210*Math.sin(a),['#a78bfa','#f472b6','#fb923c'][i],6);
+          txt('①②③'[i],ox+245*Math.cos(a),oy-245*Math.sin(a)+10,['#7c3aed','#db2777','#ea580c'][i],34,'center');});
+        cloud(ox,oy,1.4);
+      }
+    }else{
+      const Q=BQ[bi],s=Q.c==='low'?1:-1;
+      sky(s===1?'#e0e7ff':'#fef9c3','#fde68a');
+      for(let i=1;i<=5;i++){ctx.strokeStyle='#a5b4fc';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,i*55,0,7);ctx.stroke();}
+      spawn-=dt;if(spawn<=0&&ps.length<55){spawn=.12;const a=Math.random()*6.283,R=s===1?280:28;
+        const V=G/Math.hypot(f,k),th=thetaOf(k);
+        const tx=s===1?Math.sin(a):-Math.sin(a), ty=s===1?-Math.cos(a):Math.cos(a);
+        const nx=-s*Math.cos(a),ny=-s*Math.sin(a);
+        ps.push({x:cx+R*Math.cos(a),y:cy+R*Math.sin(a),vx:V*(Math.cos(th)*tx+Math.sin(th)*nx),vy:V*(Math.cos(th)*ty+Math.sin(th)*ny),tr:[]});}
+      ps.forEach(p=>{for(let i=0;i<4;i++){const h=dt/4;const dx=p.x-cx,dy=p.y-cy,r=Math.hypot(dx,dy)||1;
+          const ax=-s*G*dx/r+f*(-p.vy)-k*p.vx, ay=-s*G*dy/r+f*p.vx-k*p.vy;p.vx+=ax*h;p.vy+=ay*h;p.x+=p.vx*h;p.y+=p.vy*h;}
+        p.tr.push([p.x,p.y]);if(p.tr.length>40)p.tr.shift();});
+      if(s===1)ps=ps.filter(p=>{if(Math.hypot(p.x-cx,p.y-cy)<24){puffs.push({x:cx+(Math.random()-.5)*40,t:0});return false;}return true;});
+      else ps=ps.filter(p=>Math.hypot(p.x-cx,p.y-cy)<300);
+      ps.forEach(p=>{ctx.strokeStyle='rgba(236,72,153,.55)';ctx.lineWidth=3;ctx.beginPath();p.tr.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke();
+        ctx.fillStyle='#ec4899';ctx.beginPath();ctx.arc(p.x,p.y,4,0,7);ctx.fill();});
+      txt(s===1?'저':'고',cx,cy+18,s===1?'#e11d48':'#2563eb',54,'center');
+      txt(s===1?'저기압 · 시계 반대 방향으로 돌며 모여요':'고기압 · 시계 방향으로 돌며 퍼져요',20,40,s===1?'#e11d48':'#2563eb',28);
+      if(bAns){
+        if(s===1){puffs.forEach(u=>u.t+=dt);puffs=puffs.filter(u=>u.t<1.6);
+          puffs.forEach(u=>{ctx.globalAlpha=1-u.t/1.6;txt('⬆',u.x,cy-20-u.t*90,'#6366f1',34,'center');ctx.globalAlpha=1;});
+          for(let i=0;i<3;i++)cloud(cx-60+i*60,cy-150+Math.sin(tt*2+i)*5,1.6,i===1);
+          txt('상승 기류 → 구름! ☁️',cx,cy-200,'#4f46e5',28,'center');}
+        else{for(let i=0;i<3;i++)txt('⬇',cx-40+i*40,cy-120+((tt*80+i*30)%80),'#f59e0b',34,'center');txt('하강 기류 → 맑음! ☀️',cx,cy-180,'#d97706',28,'center');}
+      }
+    }
+  }
+  drawStep();
+}
+</script>
+</body>
+</html>
